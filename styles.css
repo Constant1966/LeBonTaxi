@@ -1,0 +1,259 @@
+  .gradient {
+    background: rgb(72, 92, 104);
+    background: linear-gradient(180deg, rgb(82, 98, 109) 0%, rgb(172, 143, 112) 60%, rgb(151, 146, 146) 98%);
+  }
+
+
+  .gradient-1{
+    background: #eeeeef89;
+  }
+  .svg-wave {
+    margin-top: -100px; /* Vous pouvez ajuster cette valeur en fonction de l'espacement souhaité */
+}
+
+.main-container {
+    background: url('img/background.png');
+    background-position: center;
+    background-size: cover;
+    width: 100%;
+    height: 100vh;
+}
+
+.main-container-1 {
+    background: url(img/city-2.jpg);
+    background-position: center;
+    background-size: cover;
+    width: 100%;
+    height: 100vh;
+}
+
+.main-container-2 {
+    background: url(img/city-4.jpg);
+    background-position: center;
+    background-size: cover;
+    width: 100%;
+    height: 100vh;
+}
+
+.header{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 2rem 7%;
+    align-items: center;
+}
+
+.navbar-nav li.nav-item a.nav-link {
+    transition: all 0.3s ease;
+    border: 1px solid transparent; /* Bordure initiale transparente */
+    border-radius: 26px;
+    background-color: transparent; /* Arrière-plan transparent */
+    padding: 5px 10px; /* Espacement des liens */
+}
+
+.navbar-nav li.nav-item a.nav-link:hover {
+    transform: scale(1.2); /* Agrandit l'élément de 20% au survol */
+    border-color: gold; /* Bordure couleur or au survol */
+    background-color: gold; /* Arrière-plan couleur or au survol */
+}
+
+
+/* styles.css */
+.carte-principale {
+    transform: scale(1.1); /* Agrandir la carte au survol */
+    transition: transform 0.3s ease; /* Ajouter une transition fluide */
+}
+
+.carte-principale:hover {
+    transform: scale(1); /* Agrandir davantage au survol */
+}
+
+
+.background-text h2{
+    color: white;
+    font-size: 50px;
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+}
+
+.background-text h2 span{
+    color: #ffc61a;
+}
+.taxi-image{
+    width: 60%;
+    margin: 0 auto;
+
+}
+.taxi-image img{
+    width: 100%;
+    margin-top: 236px;
+
+}
+
+.taxi-image-1 img{
+    width: 100%;
+    margin-top: 0px;
+
+}
+
+.home-container{
+    /* background: goldenrod; */
+    background: rgb(238,174,202);
+    background: radial-gradient(circle, rgb(157, 169, 104) 0%, rgba(52,87,128,1) 100%);
+    padding: 2rem 7%;
+    width: 100%;
+    padding-top: 4rem;
+    
+}
+.home-content{
+    padding-top: 4rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  
+}
+
+.form-fields input{
+    padding: 2rem ;
+    border: none;
+    border-bottom: 1px solid rgb(76, 70, 70);
+}
+.contact-form a{
+    width: 100%;
+    display: inline-block;
+    padding: 1rem 0;
+    color: rgb(7, 7, 7);
+    font-size: 1.5rem;
+    
+}
+.submit{
+    padding-top: 2rem;
+
+}
+.main-tariff{
+    padding: 3rem 7%;
+   
+   
+}
+.main-tariff h1{
+    font-size: 38px;
+    text-align: center;
+    padding-bottom: 6rem;
+}
+.main-tariff h1 span{
+    color: #ffc61a;
+}
+.inner-tarrif{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+.tarrif-container{
+    flex: 1 1 250px;
+    text-align: center;
+    padding: 3rem 0;
+}
+.tarrif-container img{
+    width: 60%;
+    margin-top: -50px;
+}
+.tarrif-container .inner-box h2{
+    font-size: 30px;
+}
+.tarrif-container .inner-box p{
+    font-size: 1.5rem;
+    padding: 2rem;
+}
+.tarrif-container .inner-box h3{
+    color: #ffc61a;
+    font-size: 2rem;
+}
+.tarrif-container .inner-box a{
+    font-size: 1.5rem;
+    padding: 1rem 3rem;
+
+}
+.tarrif-container:nth-child(2){
+    background: #ffc61a;
+}
+.heading-yellow{
+    color: black;
+}
+.yellw-section{
+    color: black !important;
+}
+.tarrif-container a{
+    color: white;
+    padding: 1rem 3rem;
+    background: black;
+    display: inline-block;
+    margin-top: 1rem;
+
+}
+.fast-booking{
+    background: url(img/secbg.png);
+    background-size: cover;
+    width: 100%;
+    background-position: center;
+}
+
+
+@media (max-width: 768px) {
+    html {
+        font-size: 90%;
+    }
+    .main-container {
+        background-size: contain; /* Adjust background size for smaller screens */
+        background-position: top; /* Adjust background position for smaller screens */
+    }
+
+    #menu-bars {
+        display: initial;
+    }
+
+    .header {
+        padding: 2rem;
+    }
+
+    .tarrif-container {
+        padding-bottom: 4rem;
+    }
+
+    .tarrif-container img {
+        width: 60%;
+        margin-top: 0px;
+    }
+
+    .background-text h2 {
+        font-size: xx-large;
+        top: 45%;
+        width: 100%;
+        text-align: center;
+        position: absolute;
+    }
+
+    .background-text h2 {
+        margin-top: 107px;
+        font-size: 18px; /* Exemple : réduisez la taille du titre */
+    }
+
+    .taxi-image img{
+        width: 100%;
+        margin-top: 114px;
+    }
+
+    .main-container {
+        background: url(img/road_1.jpg);
+        background-position: center;
+        background-size: cover;
+        width: 100%;
+        height: 35vh;
+    }
+}
+
+

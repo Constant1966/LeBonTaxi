@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles_2.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap"rel="stylesheet"/>
+    <link rel="stylesheet" href="fontaswesome-free-5.15.3-web/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+
+    <link rel="icon" href="img/img (2).ico" type="image/png">
+
+    <style>
+        /* Ajoutez ce style personnalisé pour redimensionner la largeur de l'offcanvas */
+        .offcanvas {
+            max-width: 200px; /* Définissez la largeur souhaitée ici */
+            max-height: 70%;
+        }
+    </style>
+    
+    <title>Services</title>
+</head>
+<body>
+
+
+    <nav class="navbar bg-body-secondary fixed-top p-0 m-0">
+        <div class="container">
+          <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <h6 class="navbar navbar-nav" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+            <span class="navbar text-warning-emphasis fs-1 p-0 m-0">Le Bon Taxi - Service</span>
+        </h6>
+        
+
+          <a class="navbar-brand" href="index.html"><img src="img/img (2).ico" width="20%" height="20%" alt="image"></a>
+          <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+            <div class="offcanvas-header">
+                <a href="index.html" class=" text-decoration-none">
+                    <h5 class="offcanvas-title" id="offcanvasNavbarLabel"><img src="img/img (2).ico" width="30%" height="30%" alt="">LeBonTaxi</h5>
+                </a>
+              <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+              <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                <li class="nav-item">
+                    <a class="nav-link active" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="services.html">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="reservation.html">Book Now</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="about_us.html">About Us</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link active" href="contact.html">Contact Us</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+    </nav>
+
+    <header>
+        <div class="container-fluid">
+            <div id="monCarousel" class="carousel slide background-text main-container" data-bs-ride="carousel" data-bs-interval="5000">
+                <div class="carousel-inner  taxi-image">
+                    <div class="carousel-item active">
+                        <div class="taxi-image">
+                            <img src="img/car_2.png" alt="">
+                        </div>
+                        <div class="background-text">
+                            <h2>LeBonTaxi <span>Votre Solution</span></h2>    
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="taxi-image">
+                            <img src="img/carmain.png" alt="">
+                        </div>
+                        <div class="background-text">
+                            <h2>Des trajets sûrs <span>à tout moment</span></h2>
+                        </div>
+                    </div>
+            
+                    <div class="carousel-item">
+                        <div class="taxi-image">
+                            <img src="img/car_15.png" alt="">
+                        </div>
+                        <div class="background-text">
+                            <h2>Réservez maintenant <span>et économisez</span></h2>
+                        </div>
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#monCarousel" role="button" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Précédent</span>
+                </a>
+                <a class="carousel-control-next" href="#monCarousel" role="button" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Suivant</span>
+                </a>
+            </div>
+        </div>
+
+    
+    </header>
+
+<section class="gradient-1">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 160" class="svg-wave"><path fill="#fff" fill-opacity="1" d="M0,32L480,128L960,160L1440,224L1440,0L960,0L480,0L0,0Z"></path></svg>
+    <div class="text-center pb-5">
+        <h1 class="display-2 text-info-emphasis">Voir Nos Services</h1>
+        <p class="lead text-warning-emphasis fs-3">Réservez un taxi en quelques clics et voyagez en toute sécurité.</p>
+    </div>
+    <div class="container">
+
+
+        <div class="row row-cols-1 row-cols-md-4 g-5">
+            <div class="col-md-3">
+              <div class="card h-100 carte-principale" id="sec-1">
+                <a href="#modalServiceOrdinaire" class="text-decoration-none" data-bs-toggle="modal">
+                    <img src="img/subaru_2.png" width="40%" height="50%" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Service Ordinaire</h5>
+                        <p class="card-text"><strong>Découvrez notre Service Ordinaire</strong>, où l'exceptionnel devient la norme. Nous nous engageons à vous...
+                        </p><br>
+                        <h6 class="text-lg-end">Plus Details...</h6>
+                    </div>
+                </a>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card h-100 carte-principale">
+                <a href="#modalServiceOfficielle" class="text-decoration-none" data-bs-toggle="modal">
+                    <img src="img/car_3.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Service Officielle</h5>
+                        <p class="card-text"><strong>Découvrez notre Service Officielle</strong>, synonyme de prestige et de raffinement. Chaque trajet est une expérience exclusive qui allie le luxe à la perfection...
+                        </p>
+                        <h6 class="text-lg-end">Plus Details...</h6>
+                        
+                    </div>
+                </a>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card h-100 carte-principale">
+                <a href="#modalServiceDeLuxe" class="text-decoration-none" data-bs-toggle="modal">
+                    <img src="img/car_12.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Service de Luxe</h5>
+                        <p class="card-text"><strong>Découvrez l'excellence incarnée avec notre Service de Luxe.</strong> Chaque trajet devient un voyage dans le monde du raffinement et du confort suprême...</p>
+                        <h6 class="text-lg-end">Plus Details...</h6>
+                    </div>
+                </a>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card h-100 carte-principale">
+                <a href="#modalServiceEnGroupe" class="text-decoration-none" data-bs-toggle="modal">
+                    <img src="img/car_14.jpg" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Service en Groupe</h5>
+                        <p class="card-text"><strong>Explorez notre Service en Groupe,</strong> conçu pour les moments où la convivialité et le partage sont essentiels. 
+                            Que vous voyagiez en petit groupe ou en une foule animée, nous vous offrons...
+                        </p>
+                        <h6 class="text-lg-end">Plus Details...</h6>
+                    </div>
+                </a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 160"><path fill="#fff" fill-opacity="1" d="M0,32L480,128L960,160L1440,224L1440,320L960,320L480,320L0,320Z"></path></svg>
+</section>
+
+<!-- Modals -->
+<section>
+    <div class="modal fade" id="modalServiceOrdinaire" tabindex="-1" aria-labelledby="modalServiceOrdinaireLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalServiceOrdinaireLabel">Service Ordinaire</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="lh-base text-lowercase"><strong>Découvrez notre Service Ordinaire</strong>, où l'exceptionnel devient la norme. Nous nous engageons à vous 
+                offrir bien plus qu'un simple trajet en voiture. Avec une attention méticuleuse aux détails, un service 
+                amical et des chauffeurs expérimentés, chaque voyage devient une expérience mémorable. Plongez dans le 
+                confort et l'élégance tandis que nous vous conduisons en toute sécurité vers votre destination. Notre 
+                Service Ordinaire, c'est bien plus qu'un transport, c'est un voyage d'excellence à chaque kilomètre 
+                parcouru, et ce pour <strong class="fst-italic fs-6">seulement 3 $ par kilomètre.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="reservation.html" class="text-decoration-none">
+                    <button type="button" class="btn btn-primary">Book Now</button>
+                </a>
+            </div>
+          </div>
+        </div>
+    </div>
+      
+      <!-- Modale pour la carte Service Officielle -->
+      <div class="modal fade" id="modalServiceOfficielle" tabindex="-1" aria-labelledby="modalServiceOfficielleLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalServiceOfficielleLabel">Service Officielle</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Découvrez notre Service Officielle</strong>, synonyme de prestige et de raffinement. Chaque trajet est une expérience 
+                exclusive qui allie le luxe à la perfection. Nos chauffeurs professionnels vous accueillent dans un univers de 
+                confort et de sophistication. Chaque déplacement devient une occasion spéciale, avec un service impeccable à 
+                chaque étape. Optez pour notre Service Officielle, où chaque kilomètre parcouru est une expérience d'élégance, 
+                le tout pour <strong class="fst-italic fs-6">seulement 10 $ par kilomètre.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="reservation.html" class="text-decoration-none">
+                    <button type="button" class="btn btn-primary">Book Now</button>
+                </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modale pour la carte Service de Luxe -->
+      <div class="modal fade" id="modalServiceDeLuxe" tabindex="-1" aria-labelledby="modalServiceDeLuxeLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalServiceDeLuxeLabel">Service de Luxe</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Découvrez l'excellence incarnée avec notre Service de Luxe.</strong> Chaque trajet devient un voyage dans le monde du raffinement
+                 et du confort suprême. Nos chauffeurs hautement qualifiés vous emmèneront dans un univers où chaque détail est soigneusement
+                  pensé pour votre satisfaction. Détendez-vous et profitez du voyage en toute sérénité, tout en vous imprégnant de l'opulence
+                   qui vous entoure. Optez pour notre Service de Luxe, où chaque kilomètre parcouru est une expérience grandiose, le tout pour
+                   <strong class="fst-italic fs-6">seulement 30 $ par kilomètre.</strong>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="reservation.html" class="text-decoration-none">
+                    <button type="button" class="btn btn-primary">Book Now</button>
+                </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modale pour la carte Service en Groupe -->
+      <div class="modal fade" id="modalServiceEnGroupe" tabindex="-1" aria-labelledby="modalServiceEnGroupeLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalServiceEnGroupeLabel">Service en Groupe</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p>Explorez notre Service en Groupe, conçu pour les moments où la convivialité et le partage sont essentiels. 
+                Que vous voyagiez en petit groupe ou en une foule animée, nous vous offrons une expérience adaptée à vos besoins. 
+                Pour les groupes de moins de 7 personnes, <strong class="fst-italic">le prix est de 15 $ par kilomètre</strong>, offrant une option économique pour 
+                les escapades intimes. Si votre groupe compte entre 7 et 13 membres, <strong class="fst-italic">profitez d'un tarif de 25 $ par kilomètre</strong>, 
+                idéal pour les événements et les sorties entre amis. Pour les groupes encore plus importants, de 14 à 20 personnes, 
+                <strong>notre tarif est de 40 $ par kilomètre</strong class="fst-italic">, garantissant un voyage en toute sérénité pour tout le monde. Quelle que soit 
+                la taille de votre groupe, notre Service en Groupe est là pour vous offrir une expérience mémorable et pratique.
+            </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="reservation.html" class="text-decoration-none">
+                    <button type="button" class="btn btn-primary">Book Now</button>
+                </a>
+            </div>
+            </a>
+          </div>
+        </div>
+      </div>
+      <h2 class="display-2 text-center text-info-emphasis pb-4">Service de Livraison</h2>
+
+</section>
+
+
+<section id="livraison-domicile" class="bg-light gradient">
+
+
+    <div class="container">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-md-5">
+                <p class="text-white fs-5">Nous vous offrons un service de livraison à domicile rapide et fiable pour répondre à tous vos besoins de transport. Que ce soit pour des courses, des colis ou des repas, notre équipe de chauffeurs professionnels est là pour vous servir. Nous assurons une livraison en toute sécurité et dans les délais convenus.</p>
+                <p class="text-white fs-5">Si Vous Voulez Déménager Rapidement Et En Toute Sécurité, Ou Si Vous Souhaitez Passer Une Commande Mais Que Vous N'avez Pas Le Temps De La Récupérer, Nous Avons La Solution Idéale Pour Vous ! Découvrez Notre Service De Livraison Rapide Et Fiable Qui Répondra À Tous Vos Besoins. Plus Besoin De Vous Inquiéter, Votre Problème Est Résolu À Jamais. Visitez Notre Site Web Dès Maintenant Pour En Savoir Plus.</p>
+            </div>
+            <div class="col-md-7">
+                <div class="inner-content">
+                    <a href="reservation.html">
+                        <div id="myCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <!-- Carrousel -->
+                            <div class="carousel-inner text-md-center pt-lg-5">
+                                <div class="carousel-item active">
+                                    <div class="card text-bg-dark">
+                                        <img src="img/car_14.jpg" class="card-img" width="500px" height="500px" alt="Image">
+                                    </div>
+                                </div>
+
+                                <div class="carousel-item active">
+                                    <div class="card text-bg-dark">
+                                        <img src="img/livraison.jpg" class="card-img" width="500px" height="500px" alt="Image">
+                                    </div>
+                                </div>
+
+                                <div class="carousel-item active">
+                                    <div class="card text-bg-dark">
+                                        <img src="img/camion.jpg" class="card-img" width="500px" height="500px" alt="Image">
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <a class="carousel-control-prev" href="#myCarousel" role="button" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Précédent</span>
+                            </a>
+                            <a class="carousel-control-next" href="#myCarousel" role="button" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Suivant</span>
+                            </a>
+                        </div>
+                    </a>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+        <path fill="#fff" fill-opacity="1" d="M0,320L48,282.7C96,245,192,171,288,138.7C384,107,480,117,576,106.7C672,96,768,64,864,69.3C960,75,1056,117,1152,144C1248,171,1344,181,1392,186.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        
+        <!-- Texte SVG -->
+        <text x="35%" y="200" font-family="Arial" font-size="36" fill="#0099ff"><a href="reservation.html">Réservez Votre Taxi Maintenant</a></text>
+      </svg>
+      
+</section>
+
+<section>
+    <div class="container pb-5">
+        <div class="row">
+            <div class="col-4">
+                <a href="#">
+                    <img src="images/apple.png" class="img-fluid text-end rounded-4 w-75" alt="subaru_2">
+                </a>
+            </div>
+
+            <div class="col-4">
+                <a href="#">
+                    <img src="images/gplay.png" class="img-fluid text-end rounded-4 w-75" alt="subaru_2">
+                </a>
+            </div>
+
+            <div class="col-4">
+                <a href="#">
+                    <img src="images/Huawei-AppGallery.jpg" class="img-fluid text-end rounded-4 w-75" alt="subaru_2">
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Section de Contact -->
+
+
+<footer class="gradient pt-3 pb-3">
+    <div class="text-center">
+            <ul class="list-inline">
+                <li class="list-inline-item">
+                    <a href="#"><i class="fas fa-envelope-open-text border border-white rounded-circle p-2"></i></a>
+                </li>
+                <li class="list-inline-item ">
+                    <a href="#"><i class="fab fa-twitter border border-white rounded-circle p-2"></i></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="#"><i class="fab fa-instagram border border-white rounded-circle p-2"></i></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="#"><i class="fab fa-telegram border border-white rounded-circle p-2"></i></a>
+                </li>
+                <li class="list-inline-item">
+                    <a href="#"><i class="fas fa-phone border border-white rounded-circle p-2"></i></a>
+                </li>
+            </ul>
+        </div>
+        <div class="container-fluid text-center">
+            <a href="contact.html" class="text-decoration-none text-light">Administration <span class="text-warning">Le Bon Taxi</span></a><br>
+        </div>
+  </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+    </body>
+</html>
