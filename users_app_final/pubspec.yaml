@@ -1,0 +1,71 @@
+name: users_app
+description: "Users app"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.6 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  connectivity_plus: ^5.0.2
+
+  # 🗑️ Firebase dependencies retirées au profit de Supabase
+
+  supabase_flutter: ^2.3.4
+
+  permission_handler: ^11.3.0
+  geolocator: ^11.0.0
+  http: ^1.2.0
+  provider: ^6.1.2
+  loading_animation_widget: ^1.2.1
+
+  restart_app: ^1.2.1
+  url_launcher: ^6.2.5
+  flutter_plugin_android_lifecycle: ^2.0.19
+  image_picker: ^1.1.2
+  googleapis: ^13.1.0
+  googleapis_auth: ^1.6.0
+  shared_preferences: ^2.2.2
+
+  google_sign_in: ^6.2.1
+  intl_phone_field: ^3.2.0
+
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.7.0
+  flutter_local_notifications: ^18.0.0
+
+  # Maps
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.1
+  geocoding: ^3.0.0
+
+  intl: ^0.19.0
+  share_plus: ^7.2.2
+
+  # SQLite (cache local pour démarrage rapide)
+  sqflite: ^2.3.2
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^2.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/final_logo.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/final_logo.png
+    - assets/images/
+    - themes/

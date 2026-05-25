@@ -1,0 +1,91 @@
+name: drivers_app
+description: "Le Bon Taxi - Application Chauffeur (Supabase)"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.6 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+  # Supabase (Backend principal)
+  supabase_flutter: ^2.0.0
+
+  # Firebase (Notifications uniquement)
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.7.0
+
+  # Google Sign-In
+  google_sign_in: ^6.2.1
+
+  # Maps OSM
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.1
+
+  # Routing & Geocoding
+  http: ^1.1.0
+
+  # Location
+  geolocator: ^12.0.0
+  location: ^5.0.3
+  permission_handler: ^11.3.1
+
+  # Image Picker
+  image_picker: ^1.0.7
+
+  # Phone Field
+  intl_phone_field: ^3.2.0
+
+  # Utils
+  connectivity_plus: ^6.0.3
+  shared_preferences: ^2.2.2
+  package_info_plus: ^8.0.0
+  intl: ^0.19.0
+
+  # SQLite (Offline cache)
+  sqflite: ^2.3.0
+  path: ^1.8.0
+
+  # Biometric Auth
+  local_auth: ^2.2.0
+  url_launcher: ^6.3.0
+
+  # Local Notifications
+  flutter_local_notifications: ^18.0.0
+
+  # UI Helpers
+  loading_animation_widget: ^1.2.0+3
+  flutter_spinkit: ^5.2.0
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.0
+  provider: ^6.1.5+1
+  pdf: ^3.12.0
+  printing: ^5.14.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_native_splash: ^2.4.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/final_logo.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/final_logo.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/final_logo.png
+    - assets/images/google-sign.png
