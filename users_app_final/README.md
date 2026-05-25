@@ -1,16 +1,33 @@
-# users_app
+# 📱 Le Bon Taxi - Application Client (Passager)
 
-Users app
+L'application **Le Bon Taxi** pour passagers offre une expérience de transport fluide, sécurisée et moderne. Elle permet aux utilisateurs de commander des courses en quelques clics, de suivre leur chauffeur en temps réel et de gérer leurs trajets en toute simplicité.
 
-## Getting Started
+## ✨ Fonctionnalités Principales
 
-This project is a starting point for a Flutter application.
+*   **Commande de Course Instantanée** : Détection automatique de la position GPS et saisie intuitive de la destination.
+*   **Suivi en Temps Réel** : Visualisez l'approche de votre chauffeur sur une carte interactive et suivez votre trajet en direct.
+*   **Estimation des Tarifs** : Calcul automatique et transparent du prix de la course avant même de confirmer la commande.
+*   **Abonnements Le Bon Taxi Plus** : Module intégré pour souscrire à des plans premium et bénéficier de réductions exclusives sur chaque course.
+*   **Gestion du Profil** : Historique complet des trajets, gestion des adresses favorites et informations personnelles.
+*   **Notifications Push** : Alertes en temps réel sur l'état de votre commande (Chauffeur arrivé, début de course, etc.).
+*   **Interface Moderne** : Design soigné avec support complet du mode **Clair** et **Sombre**.
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Stack Technique
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+*   **Framework** : [Flutter](https://flutter.dev/) (iOS & Android)
+*   **Backend** : [Supabase](https://supabase.com/) (Authentification, Base de données PostgreSQL, Temps Réel)
+*   **Cartographie** : [Google Maps SDK](https://developers.google.com/maps)
+*   **Gestion d'état** : Provider
+*   **Localisation** : Geolocator & Google Places API
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 Installation et Configuration
+
+### Prérequis
+*   Flutter SDK (dernière version stable)
+*   Un compte [Supabase](https://supabase.com/)
+*   Une clé API [Google Maps](https://console.cloud.google.com/)
+
+### Étapes d'installation
+
+1.  **Cloner le dépôt** (si ce n'est pas déjà fait) :
+    
