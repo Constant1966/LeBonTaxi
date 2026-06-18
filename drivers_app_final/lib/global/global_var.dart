@@ -3,15 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-// ============================================================
-// NAVIGATION KEY (pour notifications en arrière-plan)
-// ============================================================
+
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-// ============================================================
-// CONFIGURATION OSM - Pas de clé API Google Maps !
-// ============================================================
 
 // Position initiale de la caméra (Port-au-Prince, Haïti)
 const LatLng haitiInitialPosition = LatLng(18.5944, -72.3074);
@@ -25,7 +19,7 @@ const double initialZoom = 13.0;
 StreamSubscription<Position>? positionStream;
 StreamSubscription<Position>? positionStreamHomePage;
 
-// ✅ Timeout pour les demandes de course (variable globale)
+// Timeout pour les demandes de course (variable globale)
 int tripRequestTimeout = 20;
 
 // ============================================================
@@ -44,6 +38,11 @@ String driverName = "";
 String driverPhone = "";
 String driverPhoto = "";
 String driverEmail = "";
+String driverDocumentStatus = 'pending';
+String? documentsRejectionNote;
+List<Map<String, dynamic>> driverDocuments = [];
+dynamic documentRealtimeChannel;
+
 
 // ============================================================
 // INFORMATIONS VÉHICULE
@@ -106,6 +105,13 @@ void clearDriverData() {
   currentSubscriptionPlanName = null;
   driverDiscountPercent = 0.0;
   subscriptionExpiresAt = null;
+
+  // Reset documents
+  driverDocumentStatus = 'pending';
+  documentsRejectionNote = null;
+  driverDocuments = [];
+  documentRealtimeChannel?.unsubscribe();
+  documentRealtimeChannel = null;
 }
 
 // ============================================================
@@ -185,3 +191,26 @@ double calculateDistance(LatLng start, LatLng end) {
     end.longitude,
   ) / 1000; // Retourne en km
 }
+
+
+/// Retourne true si tous les documents obligatoires ont ete soumis.
+bool get hasSubmittedAllRequiredDocs {
+  const required = [
+    'drivers_license',
+    'criminal_record',
+    'identity_card',
+    'vehicle_registration',
+    'vehicle_insurance',
+  ];
+  final submittedTypes =
+      driverDocuments.map((d) => d['document_type'] as String).toSet();
+  return required.every(submittedTypes.contains);
+}
+
+/// Retourne les documents rejetes.
+List<Map<String, dynamic>> get rejectedDocuments =>
+    driverDocuments.where((d) => d['status'] == 'rejected').toList();
+
+/// Retourne les documents en attente.
+List<Map<String, dynamic>> get pendingDocuments =>
+    driverDocuments.where((d) => d['status'] == 'pending').toList();

@@ -442,8 +442,6 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
   Future<void> _calculateRoute() async {
     if (_pickupLocation == null || _destinationLocation == null) return;
 
-    _showSnackBar("Calcul de l'itinéraire...", isInfo: true);
-
     try {
       final route = await OSRMRoutingService.getRoute(
         _pickupLocation!,
@@ -465,6 +463,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
         final fare = FareCalculator.calculate(
           distanceKm: distanceKm,
           discountPercentage: currentUserDiscount,
+          referralDiscountValue: currentReferralDiscount,
+          referralDiscountType: currentReferralDiscountType,
         );
         _fareAmount = "$fare HTG";
       });
@@ -710,6 +710,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
             child: TextField(
               controller: _searchController,
               focusNode: _searchFocusNode,
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: "Où allez-vous ?",
                 hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -718,6 +719,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
               ),
               style: const TextStyle(fontSize: 16),
               onChanged: _onSearchChanged,
+              onSubmitted: (value) {
+                _debounceTimer?.cancel();
+                _searchPlaces(value);
+              },
             ),
           ),
           if (_isSearching)

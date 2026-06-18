@@ -40,6 +40,7 @@ class _AdminLogsPageState extends State<AdminLogsPage> {
     switch (type) {
       case 'driver': return const Color(0xFF3B82F6);
       case 'user': return const Color(0xFF8B5CF6);
+      case 'document': return const Color(0xFF6366F1);
       case 'pricing': return const Color(0xFF10B981);
       case 'discount': return const Color(0xFFF59E0B);
       case 'message': return const Color(0xFF6366F1);
@@ -53,6 +54,7 @@ class _AdminLogsPageState extends State<AdminLogsPage> {
     switch (type) {
       case 'driver': return Icons.local_taxi;
       case 'user': return Icons.person;
+      case 'document': return Icons.folder_special;
       case 'pricing': return Icons.attach_money;
       case 'discount': return Icons.discount;
       case 'message': return Icons.message;
@@ -65,8 +67,8 @@ class _AdminLogsPageState extends State<AdminLogsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final types = ['all', 'driver', 'user', 'pricing', 'discount', 'message', 'review', 'suspension'];
-    final labels = {'all': 'Tous', 'driver': 'Chauffeurs', 'user': 'Utilisateurs', 'pricing': 'Tarifs', 'discount': 'Rabais', 'message': 'Messages', 'review': 'Avis', 'suspension': 'Suspensions'};
+    final types = ['all', 'driver', 'user', 'document', 'pricing', 'discount', 'message', 'review', 'suspension'];
+    final labels = {'all': 'Tous', 'driver': 'Chauffeurs', 'user': 'Utilisateurs', 'document': 'Documents', 'pricing': 'Tarifs', 'discount': 'Rabais', 'message': 'Messages', 'review': 'Avis', 'suspension': 'Suspensions'};
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : Colors.grey.shade50,

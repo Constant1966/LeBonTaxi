@@ -193,6 +193,13 @@ ALTER PUBLICATION supabase_realtime ADD TABLE conversation_messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE app_settings;
 
 -- ==========================================
+-- MIGRATION : Changement de véhicule
+-- Ajouter ces colonnes à la table `drivers`
+-- ==========================================
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS vehicle_change_pending BOOLEAN DEFAULT false;
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS previous_vehicle_info JSONB;
+
+-- ==========================================
 -- RÉFÉRENCE : Structure des tables existantes
 -- (ne pas exécuter si elles existent déjà)
 -- ==========================================
@@ -207,7 +214,15 @@ ALTER PUBLICATION supabase_realtime ADD TABLE app_settings;
 --   car_model, car_color, car_number, car_year,
 --   car_front_photo, car_back_photo, car_side_photo,
 --   license_photo, nin, current_latitude, current_longitude,
---   last_location_update, fcm_token
+--   last_location_update, fcm_token,
+--   document_status, documents_rejection_note,
+--   vehicle_change_pending, previous_vehicle_info
+--
+-- Table `driver_documents` :
+--   id, driver_id, document_type, document_label,
+--   file_url, status (pending/approved/rejected),
+--   rejection_reason, reviewed_by, submitted_at,
+--   reviewed_at, updated_at
 --
 -- Table `trip_requests` (partagée) :
 --   id (auto), trip_id, user_id, user_name, user_phone,
@@ -224,3 +239,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE app_settings;
 --
 -- Table `earnings` :
 --   id, driver_id, trip_id, amount, created_at
+

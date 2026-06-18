@@ -9,6 +9,7 @@ import 'package:users_app/services/notification_service.dart';
 import 'package:users_app/services/local_database_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:users_app/theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +65,7 @@ class MyApp extends StatelessWidget {
             themeMode: appInfo.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+              scaffoldBackgroundColor: AppColors.background,
               useMaterial3: true,
             ),
             darkTheme: ThemeData(
@@ -72,6 +74,7 @@ class MyApp extends StatelessWidget {
                 seedColor: Colors.blue, 
                 brightness: Brightness.dark
               ),
+              scaffoldBackgroundColor: AppColors.darkBackground,
               useMaterial3: true,
             ),
             home: const SplashScreen(),

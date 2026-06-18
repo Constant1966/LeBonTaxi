@@ -432,6 +432,7 @@ class _TripChatPageState extends State<TripChatPage> {
                 focusNode: _focusNode,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.send,
                 decoration: const InputDecoration(
                   hintText: "Écrire un message...",
                   hintStyle: TextStyle(color: AppColors.textSecondary),

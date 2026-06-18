@@ -11,6 +11,7 @@ import '../global/global_var_supabase.dart';
 import '../pages/profile_page_supabase.dart';
 import '../pages/trips_history_page_supabase.dart';
 import '../pages/subscription_page.dart';
+import '../pages/referral_page.dart';
 
 class ModernDrawer extends StatefulWidget {
   const ModernDrawer({super.key});
@@ -70,6 +71,12 @@ class _ModernDrawerState extends State<ModernDrawer> with SingleTickerProviderSt
       title: "Le Bon Taxi Plus",
       page: SubscriptionPage(),
       color: Colors.amber,
+    ),
+    _DrawerItem(
+      icon: Icons.card_giftcard,
+      title: "Parrainage",
+      page: ReferralPage(),
+      color: Colors.deepPurple,
     ),
   ];
 
@@ -510,10 +517,14 @@ class _ModernDrawerState extends State<ModernDrawer> with SingleTickerProviderSt
                 color: Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.local_taxi,
-                size: 16,
-                color: Colors.white70,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  'assets/images/lebontaxi.png',
+                  height: 18,
+                  width: 18,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             const SizedBox(width: 8),

@@ -35,6 +35,7 @@ class _HomePageState extends State<HomePage>
 
   bool _isLoading = true;
   bool _isDriverOnline = false;
+  bool _waitingForLocationService = false;
   int _onlineDuration = 0;
   Timer? _onlineTimer;
   StreamSubscription<Position>? _positionSubscription;
@@ -73,6 +74,13 @@ class _HomePageState extends State<HomePage>
     switch (state) {
       case AppLifecycleState.resumed:
         print("📱 App revenue au premier plan");
+
+        // ✅ Re-vérifier le service de localisation si on l'attendait
+        if (_waitingForLocationService) {
+          _waitingForLocationService = false;
+          _checkLocationPermission();
+        }
+
         // Re-souscrire aux channels Realtime si nécessaire
         if (_isDriverOnline) {
           _subscribeToNewTrips();
@@ -354,6 +362,12 @@ class _HomePageState extends State<HomePage>
       onNewMessage: (msgData) async {
         if (!mounted) return;
 
+        // Éviter d'afficher une notification ou un popup pour sa propre réponse
+        final recipientName = msgData['recipient_name']?.toString() ?? '';
+        if (recipientName.startsWith('↩')) {
+          return;
+        }
+
         final title = msgData['title']?.toString() ?? 'Message admin';
         final message = msgData['message']?.toString() ?? '';
 
@@ -447,7 +461,8 @@ class _HomePageState extends State<HomePage>
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() => _isLoading = false);
-      _showSnackBar("Service de localisation désactivé", isError: true);
+      // ✅ Afficher un dialogue modal pour forcer l'activation
+      _showLocationServiceDialog();
       return;
     }
 
@@ -463,11 +478,181 @@ class _HomePageState extends State<HomePage>
 
     if (permission == LocationPermission.deniedForever) {
       setState(() => _isLoading = false);
-      _showSnackBar("Permission refusée définitivement", isError: true);
+      _showLocationPermissionDeniedDialog();
       return;
     }
 
     await _getCurrentLocation();
+  }
+
+  /// ✅ Dialogue modal pour forcer l'activation du service de localisation
+  void _showLocationServiceDialog() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.location_off, color: Colors.orange, size: 60),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Localisation désactivée',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Le service de localisation est nécessaire pour recevoir des courses et afficher votre position sur la carte.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Veuillez l\'activer dans les paramètres.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.orange.shade300 : Colors.orange.shade700,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  _waitingForLocationService = true;
+                  await Geolocator.openLocationSettings();
+                },
+                icon: const Icon(Icons.settings, size: 20),
+                label: const Text('Activer la localisation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _waitingForLocationService = false;
+                  // Réessayer directement
+                  _checkLocationPermission();
+                },
+                child: const Text('Réessayer', style: TextStyle(fontSize: 14)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// ✅ Dialogue pour permission refusée définitivement
+  void _showLocationPermissionDeniedDialog() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.location_disabled, color: Colors.red, size: 60),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Permission refusée',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'La permission de localisation a été refusée définitivement. Veuillez l\'activer manuellement dans les paramètres de l\'application.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  _waitingForLocationService = true;
+                  await Geolocator.openAppSettings();
+                },
+                icon: const Icon(Icons.settings, size: 20),
+                label: const Text('Ouvrir les paramètres', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _checkLocationPermission();
+                },
+                child: const Text('Réessayer', style: TextStyle(fontSize: 14)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _getCurrentLocation() async {

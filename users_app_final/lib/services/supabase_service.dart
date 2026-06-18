@@ -90,23 +90,112 @@ class SupabaseService {
   static Future<Map<String, dynamic>?> getUserProfile() async {
     if (userId == null) return null;
 
-    final response = await supabase
-        .from('users')
-        .select()
-        .eq('id', userId!)
-        .maybeSingle();
+    try {
+      final response = await supabase
+          .from('users')
+          .select()
+          .eq('id', userId!)
+          .maybeSingle();
 
-    return response;
+      if (response != null) {
+        final profile = Map<String, dynamic>.from(response);
+        // Injecter le fallback local si les champs d'urgence ou de parrainage ne sont pas présents ou sont nuls
+        final prefs = await SharedPreferences.getInstance();
+        if (profile['emergency_contact_name'] == null) {
+          profile['emergency_contact_name'] = prefs.getString('local_emergency_contact_name_$userId');
+        }
+        if (profile['emergency_contact_phone'] == null) {
+          profile['emergency_contact_phone'] = prefs.getString('local_emergency_contact_phone_$userId');
+        }
+        if (profile['referral_code'] == null) {
+          profile['referral_code'] = prefs.getString('local_referral_code_$userId');
+        }
+
+        currentUserReferralCode = profile['referral_code']?.toString();
+        currentUserReferredById = profile['referred_by_id']?.toString();
+
+        return profile;
+      }
+      return null;
+    } catch (e) {
+      print("⚠️ Erreur getUserProfile Supabase: $e");
+      // Fallback complet local en cas d'erreur de connexion
+      final prefs = await SharedPreferences.getInstance();
+      final localName = prefs.getString('last_user_name') ?? 'Utilisateur';
+      final code = prefs.getString('local_referral_code_$userId');
+      currentUserReferralCode = code;
+      currentUserReferredById = prefs.getString('local_referred_by_id_$userId');
+      return {
+        'id': userId,
+        'email': currentUser?.email ?? '',
+        'name': localName,
+        'phone': prefs.getString('last_user_phone') ?? '',
+        'photo': prefs.getString('last_user_photo') ?? '',
+        'emergency_contact_name': prefs.getString('local_emergency_contact_name_$userId'),
+        'emergency_contact_phone': prefs.getString('local_emergency_contact_phone_$userId'),
+        'referral_code': code,
+        'referred_by_id': currentUserReferredById,
+      };
+    }
   }
 
   /// Mettre à jour le profil
   static Future<void> updateUserProfile(Map<String, dynamic> data) async {
     if (userId == null) return;
 
-    await supabase
-        .from('users')
-        .update(data)
-        .eq('id', userId!);
+    // Sauvegarder localement d'abord en cache
+    final prefs = await SharedPreferences.getInstance();
+    if (data.containsKey('emergency_contact_name')) {
+      await prefs.setString('local_emergency_contact_name_$userId', data['emergency_contact_name']?.toString() ?? '');
+    }
+    if (data.containsKey('emergency_contact_phone')) {
+      await prefs.setString('local_emergency_contact_phone_$userId', data['emergency_contact_phone']?.toString() ?? '');
+    }
+    if (data.containsKey('referral_code')) {
+      await prefs.setString('local_referral_code_$userId', data['referral_code']?.toString() ?? '');
+      currentUserReferralCode = data['referral_code']?.toString();
+    }
+    if (data.containsKey('referred_by_id')) {
+      await prefs.setString('local_referred_by_id_$userId', data['referred_by_id']?.toString() ?? '');
+      currentUserReferredById = data['referred_by_id']?.toString();
+    }
+    if (data.containsKey('name')) {
+      await prefs.setString('last_user_name', data['name']?.toString() ?? '');
+    }
+    if (data.containsKey('phone')) {
+      await prefs.setString('last_user_phone', data['phone']?.toString() ?? '');
+    }
+    if (data.containsKey('photo')) {
+      await prefs.setString('last_user_photo', data['photo']?.toString() ?? '');
+    }
+
+    try {
+      await supabase
+          .from('users')
+          .update(data)
+          .eq('id', userId!);
+    } catch (e) {
+      print("⚠️ Erreur lors de l'update Supabase, tentative de fallback sans les colonnes d'urgence et de parrainage: $e");
+      // Si la mise à jour échoue (ex: colonnes inexistantes), on filtre les colonnes non prises en charge et on réessaye
+      final filteredData = Map<String, dynamic>.from(data);
+      filteredData.remove('emergency_contact_name');
+      filteredData.remove('emergency_contact_phone');
+      filteredData.remove('referral_code');
+      filteredData.remove('referred_by_id');
+
+      if (filteredData.isNotEmpty) {
+        try {
+          await supabase
+              .from('users')
+              .update(filteredData)
+              .eq('id', userId!);
+          print("✅ Profil mis à jour sur Supabase sans les nouvelles colonnes (sauvegardées localement)");
+        } catch (e2) {
+          print("❌ Échec de la mise à jour de secours sur Supabase: $e2");
+          rethrow;
+        }
+      }
+    }
   }
 
   // ============================================
@@ -481,6 +570,241 @@ class SupabaseService {
       print("✅ Historique abonnement créé");
     } catch (e) {
       print("⚠️ Erreur création historique abonnement: $e");
+    }
+  }
+
+
+  // ============================================
+  // PARRAINAGE & RÉCOMPENSES (REFERRAL SYSTEM)
+  // ============================================
+
+  /// Vérifier si un code de parrainage existe et récupérer le parrain
+  static Future<Map<String, dynamic>?> checkReferralCode(String code) async {
+    try {
+      final response = await supabase
+          .from('users')
+          .select('id, name')
+          .eq('referral_code', code.trim().toUpperCase())
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      print("⚠️ Erreur checkReferralCode: $e");
+      return null;
+    }
+  }
+
+  /// Générer et sauvegarder un code de parrainage pour l'utilisateur connecté
+  static Future<String> generateAndSaveReferralCode(String name) async {
+    if (userId == null) return '';
+    
+    // Générer le code
+    final cleanName = name.replaceAll(RegExp(r'[^a-zA-Z]'), '').toUpperCase();
+    final namePart = cleanName.length >= 4 ? cleanName.substring(0, 4) : (cleanName + 'LBT').substring(0, 4);
+    final randomNum = (1000 + (DateTime.now().microsecondsSinceEpoch % 9000)).toString();
+    final generatedCode = 'LBT-$namePart$randomNum';
+
+    currentUserReferralCode = generatedCode;
+
+    // Cache local
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('local_referral_code_$userId', generatedCode);
+
+    try {
+      await supabase
+          .from('users')
+          .update({'referral_code': generatedCode})
+          .eq('id', userId!);
+      print("✅ Code de parrainage mis à jour sur Supabase: $generatedCode");
+    } catch (e) {
+      print("⚠️ Impossible d'enregistrer le code de parrainage sur Supabase (fallback local): $e");
+    }
+
+    return generatedCode;
+  }
+
+  /// Charger la récompense de parrainage active non utilisée
+  static Future<void> loadActiveReferralReward() async {
+    try {
+      if (userId == null) return;
+
+      // Charger aussi le message de partage et la config
+      final settings = await supabase
+          .from('app_settings')
+          .select('referral_share_message')
+          .eq('id', 1)
+          .maybeSingle();
+      if (settings != null && settings['referral_share_message'] != null) {
+        globalReferralShareMessage = settings['referral_share_message'].toString();
+      }
+
+      final reward = await supabase
+          .from('referral_rewards')
+          .select()
+          .eq('referrer_id', userId!)
+          .eq('status', 'unused')
+          .order('created_at', ascending: true)
+          .limit(1)
+          .maybeSingle();
+
+      if (reward != null) {
+        activeReferralRewardId = reward['id']?.toString();
+        currentReferralDiscount = (reward['reward_value'] as num).toDouble();
+        currentReferralDiscountType = reward['reward_type']?.toString();
+        print("🎁 Récompense de parrainage active: ID=$activeReferralRewardId, Valeur=$currentReferralDiscount ($currentReferralDiscountType)");
+      } else {
+        activeReferralRewardId = null;
+        currentReferralDiscount = 0.0;
+        currentReferralDiscountType = null;
+      }
+    } catch (e) {
+      print("⚠️ Erreur loadActiveReferralReward: $e");
+      activeReferralRewardId = null;
+      currentReferralDiscount = 0.0;
+      currentReferralDiscountType = null;
+    }
+  }
+
+  /// Marquer une récompense comme utilisée lors du trajet
+  static Future<void> useReferralReward(String rewardId, String tripId) async {
+    try {
+      await supabase.from('referral_rewards').update({
+        'status': 'used',
+        'used_at': DateTime.now().toIso8601String(),
+        'trip_id': tripId,
+      }).eq('id', rewardId);
+      
+      print("✅ Récompense de parrainage $rewardId marquée comme utilisée pour la course $tripId");
+      
+      // Réinitialiser les globales de réduction après utilisation
+      activeReferralRewardId = null;
+      currentReferralDiscount = 0.0;
+      currentReferralDiscountType = null;
+    } catch (e) {
+      print("❌ Erreur useReferralReward: $e");
+    }
+  }
+
+  /// Déclencher la création d'une récompense pour le parrain (et éventuellement le filleul)
+  static Future<void> triggerReferralReward(String referredId, String referrerId) async {
+    try {
+      // Charger les paramètres de parrainage depuis app_settings
+      final settings = await supabase
+          .from('app_settings')
+          .select('referral_reward_enabled, referral_reward_type, referral_reward_value, referral_welcome_enabled, referral_welcome_type, referral_welcome_value')
+          .eq('id', 1)
+          .maybeSingle();
+
+      if (settings != null) {
+        final enabled = settings['referral_reward_enabled'] as bool? ?? true;
+        if (!enabled) {
+          print("ℹ️ Le programme de parrainage est désactivé par l'admin.");
+          return;
+        }
+
+        final type = settings['referral_reward_type']?.toString() ?? 'percentage';
+        final value = (settings['referral_reward_value'] as num?)?.toDouble() ?? 10.0;
+
+        // 1. Récompense pour le parrain avec fallback résilient si la colonne is_welcome n'existe pas encore
+        try {
+          await supabase.from('referral_rewards').insert({
+            'referrer_id': referrerId,
+            'referred_id': referredId,
+            'reward_type': type,
+            'reward_value': value,
+            'status': 'unused',
+            'is_welcome': false,
+          });
+          print("🎁 Récompense de parrainage créée avec succès pour le parrain $referrerId");
+        } catch (dbError) {
+          print("⚠️ Échec d'insertion avec 'is_welcome', tentative de fallback sans cette colonne: $dbError");
+          try {
+            await supabase.from('referral_rewards').insert({
+              'referrer_id': referrerId,
+              'referred_id': referredId,
+              'reward_type': type,
+              'reward_value': value,
+              'status': 'unused',
+            });
+            print("🎁 Récompense de parrainage créée pour le parrain $referrerId (fallback)");
+          } catch (dbErrorFallback) {
+            print("❌ Échec total de l'insertion parrain: $dbErrorFallback");
+          }
+        }
+
+        // 2. Récompense de bienvenue pour le filleul (si configurée/activée)
+        final welcomeEnabled = settings['referral_welcome_enabled'] as bool? ?? true;
+        if (welcomeEnabled) {
+          final welcomeType = settings['referral_welcome_type']?.toString() ?? 'percentage';
+          final welcomeValue = (settings['referral_welcome_value'] as num?)?.toDouble() ?? 5.0;
+
+          try {
+            await supabase.from('referral_rewards').insert({
+              'referrer_id': referredId, // Le filleul est le bénéficiaire de sa remise
+              'referred_id': referrerId, // Le parrain est lié
+              'reward_type': welcomeType,
+              'reward_value': welcomeValue,
+              'status': 'unused',
+              'is_welcome': true,
+            });
+            print("🎁 Récompense de bienvenue créée avec succès pour le filleul $referredId");
+          } catch (dbError2) {
+            print("⚠️ Échec d'insertion de bienvenue avec 'is_welcome', fallback: $dbError2");
+            try {
+              await supabase.from('referral_rewards').insert({
+                'referrer_id': referredId,
+                'referred_id': referrerId,
+                'reward_type': welcomeType,
+                'reward_value': welcomeValue,
+                'status': 'unused',
+              });
+              print("🎁 Récompense de bienvenue créée pour le filleul $referredId (fallback sans is_welcome)");
+            } catch (dbError2Fallback) {
+              print("❌ Échec total de l'insertion filleul: $dbError2Fallback");
+            }
+          }
+        }
+
+        // 3. Notification push pour le parrain (FCM Edge Function)
+        try {
+          final referrerUser = await supabase
+              .from('users')
+              .select('fcm_token')
+              .eq('id', referrerId)
+              .maybeSingle();
+
+          final referredUser = await supabase
+              .from('users')
+              .select('name')
+              .eq('id', referredId)
+              .maybeSingle();
+
+          if (referrerUser != null && referredUser != null) {
+            final fcmToken = referrerUser['fcm_token']?.toString();
+            final referredName = referredUser['name']?.toString() ?? 'Un ami';
+
+            if (fcmToken != null && fcmToken.isNotEmpty) {
+              final valStr = type == 'percentage' ? '$value%' : '$value HTG';
+              await supabase.functions.invoke(
+                'send-fcm-notification',
+                body: {
+                  'token': fcmToken,
+                  'title': '🎁 Nouveau parrainage réussi !',
+                  'body': '$referredName a rejoint LeBonTaxi grâce à vous. Vous gagnez -$valStr sur votre prochain trajet !',
+                  'data': {
+                    'type': 'referral_success',
+                    'referred_name': referredName,
+                  },
+                },
+              );
+              print("🔔 Notification push de parrainage envoyée avec succès au parrain !");
+            }
+          }
+        } catch (notifError) {
+          print("⚠️ Échec lors de la notification push du parrain: $notifError");
+        }
+      }
+    } catch (e) {
+      print("❌ Erreur générale triggerReferralReward: $e");
     }
   }
 

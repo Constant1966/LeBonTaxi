@@ -74,194 +74,198 @@ class _RatingDialogSupabaseState extends State<RatingDialogSupabase>
         backgroundColor: Colors.transparent,
         child: ScaleTransition(
           scale: _scaleAnimation,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // ✅ ICÔNE
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.sentiment_satisfied_alt,
-                        size: 40,
-                        color: AppColors.primary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ✅ TITRE
-                    const Text(
-                      "Comment était votre course ?",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // ✅ NOM DU CHAUFFEUR
-                    Text(
-                      "Avec ${widget.driverName}",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // ✅ ÉTOILES
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _rating = index + 1;
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: AnimatedScale(
-                              scale: index < _rating ? 1.2 : 1.0,
-                              duration: const Duration(milliseconds: 200),
-                              child: Icon(
-                                index < _rating ? Icons.star_rounded : Icons.star_border_rounded,
-                                size: 40,
-                                color: index < _rating
-                                    ? AppColors.warning
-                                    : Colors.grey.shade300,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // ✅ TEXTE DESCRIPTIF
-                    Text(
-                      _getRatingText(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _rating > 0 ? AppColors.warning : Colors.grey.shade500,
-                        fontWeight: _rating > 0 ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ✅ CHAMP COMMENTAIRE (optionnel)
-                    if (_rating > 0) ...[
-                      TextField(
-                        controller: _commentController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: "Un commentaire ? (optionnel)",
-                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.primary),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450, minWidth: 300),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ✅ ICÔNE
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.sentiment_satisfied_alt,
+                          size: 40,
+                          color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                    ],
 
-                    // ✅ BOUTON ENVOYER (visible quand étoile sélectionnée)
-                    if (_rating > 0)
+                      const SizedBox(height: 20),
+
+                      // ✅ TITRE
+                      Text(
+                        "Comment était votre course ?",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // ✅ NOM DU CHAUFFEUR
+                      Text(
+                        "Avec ${widget.driverName}",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ✅ ÉTOILES
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _rating = index + 1;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: AnimatedScale(
+                                scale: index < _rating ? 1.2 : 1.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Icon(
+                                  index < _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                                  size: 40,
+                                  color: index < _rating
+                                      ? AppColors.warning
+                                      : Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // ✅ TEXTE DESCRIPTIF
+                      Text(
+                        _getRatingText(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: _rating > 0 ? AppColors.warning : AppColors.getTextSecondaryColor(context),
+                          fontWeight: _rating > 0 ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ✅ CHAMP COMMENTAIRE (optionnel)
+                      if (_rating > 0) ...[
+                        TextField(
+                          controller: _commentController,
+                          maxLines: 2,
+                          style: TextStyle(color: AppColors.getTextPrimaryColor(context)),
+                          decoration: InputDecoration(
+                            hintText: "Un commentaire ? (optionnel)",
+                            hintStyle: TextStyle(color: AppColors.getTextSecondaryColor(context).withOpacity(0.6), fontSize: 14),
+                            filled: true,
+                            fillColor: AppColors.getBackgroundColor(context),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ✅ BOUTON ENVOYER (visible quand étoile sélectionnée)
+                      if (_rating > 0)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _isSubmitting ? null : () => _submit(skip: false),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "Envoyer ($_rating étoile${_rating > 1 ? 's' : ''})",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                      if (_rating > 0) const SizedBox(height: 12),
+
+                      // ✅ BOUTON PASSER
                       SizedBox(
                         width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : () => _submit(skip: false),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
+                        height: 48,
+                        child: TextButton(
+                          onPressed: _isSubmitting ? null : () => _submit(skip: true),
+                          style: TextButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  "Envoyer ($_rating étoile${_rating > 1 ? 's' : ''})",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ),
-
-                    if (_rating > 0) const SizedBox(height: 12),
-
-                    // ✅ BOUTON PASSER
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: TextButton(
-                        onPressed: _isSubmitting ? null : () => _submit(skip: true),
-                        style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          "Passer",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade500,
+                          child: Text(
+                            "Passer",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.getTextSecondaryColor(context),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

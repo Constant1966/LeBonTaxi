@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:drivers_app/authentication/splash_screen.dart';
+import 'package:drivers_app/pages/document_status_page.dart';
 import 'package:drivers_app/services/local_database_service.dart';
 import 'package:drivers_app/services/local_notification_service.dart';
 import 'package:drivers_app/services/sync_service.dart';
@@ -118,6 +119,9 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           home: const SplashScreen(),
+          routes: {
+            '/document-status': (context) => const DocumentStatusPage(),
+          },
         );
       },
     );

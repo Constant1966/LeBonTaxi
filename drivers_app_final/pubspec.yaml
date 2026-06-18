@@ -36,8 +36,9 @@ dependencies:
   location: ^5.0.3
   permission_handler: ^11.3.1
 
-  # Image Picker
+  # Image Picker & Processing
   image_picker: ^1.0.7
+  image: ^4.0.0
 
   # Phone Field
   intl_phone_field: ^3.2.0

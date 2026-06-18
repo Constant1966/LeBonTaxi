@@ -8,6 +8,7 @@ import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/pages/settings_page.dart';
 import 'package:users_app/pages/trips_history_page_supabase.dart';
 import 'package:users_app/pages/about_page.dart';
+import 'package:users_app/pages/edit_profile_page.dart';
 import 'package:users_app/theme/app_colors.dart';
 import 'package:users_app/global/global_var_supabase.dart';
 
@@ -27,6 +28,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   int _totalTrips = 0;
   double _totalDistance = 0;
   String _memberSince = "";
+  String _emergencyName = "";
+  String _emergencyPhone = "";
 
   // États
   bool _isLoading = true;
@@ -124,6 +127,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           _userPhone = profile['phone'] ?? '';
           _photoUrl = profile['photo'] ?? '';
           _memberSince = profile['created_at'] ?? DateTime.now().toIso8601String();
+          _emergencyName = profile['emergency_contact_name'] ?? '';
+          _emergencyPhone = profile['emergency_contact_phone'] ?? '';
         });
       }
     } catch (e) {
@@ -388,6 +393,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       const SizedBox(height: 20),
                       _buildPersonalInfo(),
                       const SizedBox(height: 20),
+                      _buildEmergencyInfoCard(),
+                      const SizedBox(height: 20),
                       ...List.generate(
                         _quickActions.length,
                             (index) => Padding(
@@ -634,6 +641,19 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   color: AppColors.textPrimary,
                 ),
               ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.edit, color: AppColors.primary),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                  );
+                  if (result == true) {
+                    _loadUserData();
+                  }
+                },
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -656,6 +676,69 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             label: 'Membre depuis',
             value: _formatDate(_memberSince),
             color: AppColors.accent,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmergencyInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE53935), Color(0xFFD32F2F)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.shield_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Contact de confiance',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildInfoTile(
+            icon: Icons.person_pin_outlined,
+            label: "Nom du contact d'urgence",
+            value: _emergencyName.isNotEmpty ? _emergencyName : 'Non configuré',
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: 16),
+          _buildInfoTile(
+            icon: Icons.phone_iphone_outlined,
+            label: 'Téléphone de secours',
+            value: _emergencyPhone.isNotEmpty ? _emergencyPhone : 'Non configuré',
+            color: AppColors.success,
           ),
         ],
       ),

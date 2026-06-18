@@ -377,6 +377,12 @@ class LocalDatabaseService {
   // NETTOYAGE
   // ============================================================
 
+  static Future<void> clearAdminMessages() async {
+    final db = await database;
+    await db.delete('cached_admin_messages');
+    print('🗑️ Cache des messages admin vidé');
+  }
+
   static Future<void> clearAll() async {
     final db = await database;
     await db.delete('user_profile');

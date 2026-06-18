@@ -5,6 +5,8 @@ import 'package:users_app/authentication/signup_screen_supabase.dart';
 import 'package:users_app/services/google_signin_service.dart';
 import 'package:users_app/services/notification_service.dart';
 import 'package:users_app/pages/complete_profile_page.dart';
+import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/services/local_database_service.dart';
 
 class LoginScreenSupabase extends StatefulWidget {
   const LoginScreenSupabase({super.key});
@@ -163,6 +165,9 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
       // ✅ Rafraîchir FCM token après login
       await NotificationService.refreshToken();
 
+      // ✅ Déjà un compte, pas besoin de montrer le guide
+      await LocalDatabaseService.saveAppSetting('has_completed_guide', 'true');
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -197,7 +202,7 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const CircularProgressIndicator(),
@@ -215,10 +220,15 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
         final profileCompleted = result['profileCompleted'] == true;
 
         if (profileCompleted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
-          );
+          // ✅ Déjà un compte, pas besoin de montrer le guide
+          await LocalDatabaseService.saveAppSetting('has_completed_guide', 'true');
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomePage()),
+            );
+          }
         } else {
           Navigator.pushReplacement(
             context,
@@ -285,8 +295,9 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -312,7 +323,7 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.shade100,
+                                color: isDark ? Colors.blue.withOpacity(0.3) : Colors.blue.shade100,
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -321,7 +332,7 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
                             child: Image.asset(
-                              'assets/images/final_logo.png',
+                              'assets/images/lebontaxi.png',
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
@@ -353,12 +364,12 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                   const SizedBox(height: 40),
 
                   // Welcome text
-                  const Text(
+                  Text(
                     'Bon retour !',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.getTextPrimaryColor(context),
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -367,7 +378,7 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                     'Connectez-vous pour continuer',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey.shade600,
+                      color: AppColors.getTextSecondaryColor(context),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -383,20 +394,20 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(fontSize: 16),
+                          style: TextStyle(fontSize: 16, color: AppColors.getTextPrimaryColor(context)),
                           decoration: InputDecoration(
                             labelText: 'Email',
-                            labelStyle: TextStyle(color: Colors.grey.shade600),
+                            labelStyle: TextStyle(color: AppColors.getTextSecondaryColor(context)),
                             prefixIcon: Icon(Icons.email_outlined, color: Colors.blue.shade600),
                             filled: true,
-                            fillColor: Colors.grey.shade50,
+                            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade200),
+                              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -424,27 +435,27 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
-                          style: const TextStyle(fontSize: 16),
+                          style: TextStyle(fontSize: 16, color: AppColors.getTextPrimaryColor(context)),
                           decoration: InputDecoration(
                             labelText: 'Mot de passe',
-                            labelStyle: TextStyle(color: Colors.grey.shade600),
+                            labelStyle: TextStyle(color: AppColors.getTextSecondaryColor(context)),
                             prefixIcon: Icon(Icons.lock_outline, color: Colors.blue.shade600),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                color: Colors.grey.shade600,
+                                color: AppColors.getTextSecondaryColor(context),
                               ),
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                             filled: true,
-                            fillColor: Colors.grey.shade50,
+                            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade200),
+                              borderSide: BorderSide(color: AppColors.getBorderColor(context)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -511,19 +522,19 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: AppColors.getBorderColor(context))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           "ou",
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: AppColors.getTextSecondaryColor(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: AppColors.getBorderColor(context))),
                     ],
                   ),
 
@@ -545,18 +556,18 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                           color: Color(0xFF4285F4),
                         ),
                       ),
-                      label: const Text(
+                      label: Text(
                         "Continuer avec Google",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A1A1A),
+                          color: AppColors.getTextPrimaryColor(context),
                           letterSpacing: 0.3,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+                        side: BorderSide(color: AppColors.getBorderColor(context), width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -584,7 +595,7 @@ class _LoginScreenSupabaseState extends State<LoginScreenSupabase>
                         text: TextSpan(
                           style: TextStyle(
                             fontSize: 15,
-                            color: Colors.grey.shade600,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                           children: [
                             const TextSpan(text: "Pas de compte ? "),

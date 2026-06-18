@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/services/google_signin_service.dart';
@@ -6,6 +7,9 @@ import 'package:users_app/authentication/login_screen_supabase.dart';
 import 'package:users_app/pages/complete_profile_page.dart';
 import 'package:users_app/pages/home_page.dart';
 import 'package:users_app/services/notification_service.dart';
+import 'package:users_app/pages/terms_conditions_page.dart';
+import 'package:users_app/pages/privacy_policy_page.dart';
+import 'package:users_app/theme/app_colors.dart';
 
 class SignupScreenSupabase extends StatefulWidget {
   const SignupScreenSupabase({super.key});
@@ -23,10 +27,12 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
   final _ninController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _referralCodeController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _acceptedTerms = false;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -54,6 +60,7 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
     _ninController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _referralCodeController.dispose();
     super.dispose();
   }
 
@@ -97,6 +104,22 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
       final userId = response.user!.id;
       final userEmail = response.user!.email!;
 
+      // Vérifier le code de parrainage s'il est renseigné
+      String? referredById;
+      if (_referralCodeController.text.trim().isNotEmpty) {
+        final referrer = await SupabaseService.checkReferralCode(_referralCodeController.text.trim());
+        if (referrer == null) {
+          throw Exception("Le code de parrainage saisi est invalide.");
+        }
+        referredById = referrer['id'] as String;
+      }
+
+      // Générer son propre code de parrainage
+      final cleanName = _nameController.text.trim().replaceAll(RegExp(r'[^a-zA-Z]'), '').toUpperCase();
+      final namePart = cleanName.length >= 4 ? cleanName.substring(0, 4) : (cleanName + 'LBT').substring(0, 4);
+      final randomNum = (1000 + (DateTime.now().microsecondsSinceEpoch % 9000)).toString();
+      final myReferralCode = 'LBT-$namePart$randomNum';
+
       await SupabaseService.supabase.from('users').insert({
         'id': userId,
         'email': userEmail,
@@ -105,6 +128,8 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
         'nin': _ninController.text.trim(),
         'block_status': 'no',
         'profile_completed': false,
+        'referred_by_id': referredById,
+        'referral_code': myReferralCode,
         'created_at': DateTime.now().toIso8601String(),
       });
 
@@ -166,7 +191,7 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const CircularProgressIndicator(),
@@ -259,13 +284,14 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A1A)),
+          icon: Icon(Icons.arrow_back, color: AppColors.getTextPrimaryColor(context)),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -280,12 +306,12 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
-                  const Text(
+                  Text(
                     'Créer un compte',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.getTextPrimaryColor(context),
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -294,7 +320,7 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                     'Rejoignez Le Bon Taxi aujourd\'hui',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey.shade600,
+                      color: AppColors.getTextSecondaryColor(context),
                     ),
                   ),
 
@@ -307,17 +333,17 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                     child: OutlinedButton.icon(
                       onPressed: _signInWithGoogle,
                       icon: const Icon(Icons.g_mobiledata, size: 32, color: Color(0xFF4285F4)),
-                      label: const Text(
+                      label: Text(
                         "Continuer avec Google",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A1A1A),
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+                        side: BorderSide(color: AppColors.getBorderColor(context), width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -330,19 +356,19 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: AppColors.getBorderColor(context))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           "ou avec email",
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: AppColors.getTextSecondaryColor(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: AppColors.getBorderColor(context))),
                     ],
                   ),
 
@@ -431,7 +457,7 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: Colors.grey.shade600,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
@@ -456,7 +482,7 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: Colors.grey.shade600,
+                        color: AppColors.getTextSecondaryColor(context),
                       ),
                       onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
@@ -471,14 +497,90 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                     },
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+
+                  _buildTextField(
+                    controller: _referralCodeController,
+                    label: 'Code de parrainage (Optionnel)',
+                    icon: Icons.card_giftcard,
+                    validator: (value) => null,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Checkbox CGU & Privacy Policy
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _acceptedTerms,
+                        activeColor: Colors.blue.shade600,
+                        onChanged: (value) {
+                          setState(() {
+                            _acceptedTerms = value ?? false;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.getTextSecondaryColor(context),
+                              height: 1.4,
+                            ),
+                            children: [
+                              const TextSpan(text: "J'accepte les "),
+                              TextSpan(
+                                text: "Conditions Générales d'Utilisation",
+                                style: TextStyle(
+                                  color: Colors.blue.shade600,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const TermsConditionsPage(),
+                                      ),
+                                    );
+                                  },
+                              ),
+                              const TextSpan(text: " et la "),
+                              TextSpan(
+                                text: "Politique de Confidentialité",
+                                style: TextStyle(
+                                  color: Colors.blue.shade600,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const PrivacyPolicyPage(),
+                                      ),
+                                    );
+                                  },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
 
                   // Signup button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _signUp,
+                      onPressed: (_isLoading || !_acceptedTerms) ? null : _signUp,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade600,
                         foregroundColor: Colors.white,
@@ -518,7 +620,7 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
                         text: TextSpan(
                           style: TextStyle(
                             fontSize: 15,
-                            color: Colors.grey.shade600,
+                            color: AppColors.getTextSecondaryColor(context),
                           ),
                           children: [
                             const TextSpan(text: "Déjà un compte ? "),
@@ -552,25 +654,26 @@ class _SignupScreenSupabaseState extends State<SignupScreenSupabase>
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: const TextStyle(fontSize: 16),
+      style: TextStyle(fontSize: 16, color: AppColors.getTextPrimaryColor(context)),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade600),
+        labelStyle: TextStyle(color: AppColors.getTextSecondaryColor(context)),
         prefixIcon: Icon(icon, color: Colors.blue.shade600),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

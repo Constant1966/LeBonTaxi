@@ -102,6 +102,7 @@ class _TripsPageState extends State<TripsPage>
                     child: TextField(
                       controller: searchController,
                       style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                      textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
                         hintText: "Rechercher par ID de trajet, utilisateur ou nom de chauffeur...",
                         hintStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
@@ -116,6 +117,12 @@ class _TripsPageState extends State<TripsPage>
                         setState(() {
                           searchQuery = value.toLowerCase();
                         });
+                      },
+                      onSubmitted: (value) {
+                        setState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                        FocusScope.of(context).unfocus();
                       },
                     ),
                   ),

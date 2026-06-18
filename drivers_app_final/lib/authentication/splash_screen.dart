@@ -8,7 +8,9 @@ import 'package:drivers_app/services/subscription_service.dart';
 import 'package:drivers_app/services/app_settings_service.dart';
 import 'package:drivers_app/authentication/login_screen.dart';
 import 'package:drivers_app/authentication/driver_registration_screen.dart';
+import 'package:drivers_app/authentication/splash_screen_document_check.dart';
 import 'package:drivers_app/pages/dashboard.dart';
+import 'package:drivers_app/pages/document_status_page.dart';
 import 'package:drivers_app/theme/app_colors.dart';
 import 'package:drivers_app/global/global_var.dart';
 
@@ -20,7 +22,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, DocumentStatusCheck {
   // ── Animation Controllers ──
   late AnimationController _logoController;
   late AnimationController _textController;
@@ -229,9 +231,36 @@ class _SplashScreenState extends State<SplashScreen>
         return;
       }
 
-      if (!verified && !_isOfflineMode) {
-        _showNotVerifiedDialog();
-        return;
+      // ── Nouveau : vérification par document_status ──
+      if (!_isOfflineMode) {
+        final String documentStatus =
+            driverProfile['document_status'] as String? ?? 'pending';
+
+        switch (documentStatus) {
+          case 'pending':
+          case 'under_review':
+            _showNotVerifiedDialog();
+            return;
+
+          case 'documents_required':
+            _goToRegistration();
+            return;
+
+          case 'rejected':
+            _goToDocumentStatus(showRejectionBanner: true);
+            return;
+
+          case 'approved':
+            if (!verified) {
+              _showNotVerifiedDialog();
+              return;
+            }
+            break; // continuer vers le dashboard
+
+          default:
+            _showNotVerifiedDialog();
+            return;
+        }
       }
 
       // Charger abonnement et paramètres de tarification
@@ -380,6 +409,20 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  void _goToDocumentStatus({bool showRejectionBanner = false}) {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const DocumentStatusPage(),
+        transitionDuration: const Duration(milliseconds: 800),
+        transitionsBuilder: (_, anim, __, child) {
+          return FadeTransition(opacity: anim, child: child);
+        },
+      ),
+    );
+  }
+
   void _showBlockedDialog() {
     if (!mounted) return;
     showDialog(
@@ -427,9 +470,16 @@ class _SplashScreenState extends State<SplashScreen>
           ],
         ),
         content: const Text(
-          'Votre compte est en cours de vérification. Vous recevrez une notification dans 24-48h.',
+          'Votre dossier est en cours d\'examen. Vous recevrez une notification dans 24-48h.',
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _goToDocumentStatus();
+            },
+            child: const Text('Voir mes documents'),
+          ),
           TextButton(
             onPressed: () async {
               await SupabaseService.signOut();
@@ -437,7 +487,7 @@ class _SplashScreenState extends State<SplashScreen>
               if (mounted) Navigator.pop(context);
               _goToLogin();
             },
-            child: const Text('OK'),
+            child: const Text('Se déconnecter'),
           ),
         ],
       ),

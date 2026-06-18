@@ -6,6 +6,7 @@ import 'package:drivers_app/services/local_database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:drivers_app/authentication/login_screen.dart';
 import 'package:drivers_app/theme/app_colors.dart';
+import 'package:drivers_app/pages/profile_page_document_section.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -190,6 +191,8 @@ class _ProfilePageState extends State<ProfilePage>
                         _buildStatsCards(isDark),
                         const SizedBox(height: 20),
                         _buildInfoSection(theme, isDark),
+                        const SizedBox(height: 20),
+                        const ProfileDocumentSection(),
                         const SizedBox(height: 20),
                         _buildActionButtons(theme, isDark),
                       ],

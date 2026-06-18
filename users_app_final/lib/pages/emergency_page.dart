@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:users_app/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:users_app/services/supabase_service.dart';
+import 'package:users_app/pages/edit_profile_page.dart';
 
 class EmergencyPage extends StatefulWidget {
   const EmergencyPage({super.key});
@@ -12,6 +14,9 @@ class EmergencyPage extends StatefulWidget {
 
 class _EmergencyPageState extends State<EmergencyPage> {
   bool _isLoading = true;
+  Position? _currentPosition;
+  String _emergencyName = "";
+  String _emergencyPhone = "";
 
   // ✅ Services d'urgence en Haïti
   final List<EmergencyService> _emergencyServices = [
@@ -107,14 +112,16 @@ class _EmergencyPageState extends State<EmergencyPage> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _loadEmergencyContact();
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      await Geolocator.getCurrentPosition(
+      final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
+        _currentPosition = pos;
         _isLoading = false;
       });
     } catch (e) {
@@ -123,10 +130,224 @@ class _EmergencyPageState extends State<EmergencyPage> {
     }
   }
 
+  Future<void> _loadEmergencyContact() async {
+    try {
+      final profile = await SupabaseService.getUserProfile();
+      if (profile != null && mounted) {
+        setState(() {
+          _emergencyName = profile['emergency_contact_name'] ?? '';
+          _emergencyPhone = profile['emergency_contact_phone'] ?? '';
+        });
+      }
+    } catch (e) {
+      print("❌ Erreur chargement contact d'urgence: $e");
+    }
+  }
+
+  Future<void> _sendSOS_SMS() async {
+    final lat = _currentPosition?.latitude;
+    final lng = _currentPosition?.longitude;
+    final locationLink = (lat != null && lng != null)
+        ? "https://www.google.com/maps/search/?api=1&query=$lat,$lng"
+        : "[Localisation non disponible]";
+    
+    final message = "SOS ! Je suis actuellement en déplacement avec Le Bon Taxi et j'ai besoin d'aide. Ma position en direct : $locationLink";
+    
+    final Uri smsUri = Uri(
+      scheme: 'sms',
+      path: _emergencyPhone,
+      queryParameters: <String, String>{
+        'body': message,
+      },
+    );
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        // Fallback pour certains appareils
+        final Uri fallbackUri = Uri.parse("sms:$_emergencyPhone?body=${Uri.encodeComponent(message)}");
+        if (await canLaunchUrl(fallbackUri)) {
+          await launchUrl(fallbackUri);
+        } else {
+          throw Exception("Impossible d'ouvrir l'application de messagerie SMS");
+        }
+      }
+    } catch (e) {
+      print("❌ Erreur SOS SMS: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur d'envoi SMS : $e"),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildTrustContactSection() {
+    final hasContact = _emergencyName.isNotEmpty && _emergencyPhone.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          )
+        ],
+        border: Border.all(
+          color: hasContact ? AppColors.success.withOpacity(0.3) : AppColors.getBorderColor(context),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasContact ? Icons.verified_user : Icons.gpp_maybe_outlined,
+                color: hasContact ? AppColors.success : AppColors.warning,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "Contact de confiance",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (!hasContact) ...[
+            Text(
+              "Vous n'avez pas encore configuré de contact de confiance pour votre sécurité.",
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                  );
+                  if (result == true) {
+                    _loadEmergencyContact();
+                  }
+                },
+                icon: const Icon(Icons.add, size: 20),
+                label: const Text("Configurer maintenant"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _emergencyName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _emergencyPhone,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Actions
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.call, color: Colors.white, size: 18),
+                  ),
+                  onPressed: () => _callNumber(_emergencyPhone, _emergencyName),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE53935),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.message, color: Colors.white, size: 18),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        title: const Row(
+                          children: [
+                            Icon(Icons.warning, color: Color(0xFFE53935)),
+                            SizedBox(width: 12),
+                            Text("Alerte SOS"),
+                          ],
+                        ),
+                        content: Text(
+                          "Voulez-vous envoyer un SMS d'alerte SOS à $_emergencyName avec votre position actuelle ?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text("Annuler"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _sendSOS_SMS();
+                            },
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE53935), foregroundColor: Colors.white),
+                            child: const Text("Envoyer"),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
         title: const Text(
           "Urgences",
@@ -143,6 +364,10 @@ class _EmergencyPageState extends State<EmergencyPage> {
         children: [
           // Alerte urgence
           _buildEmergencyAlert(),
+          const SizedBox(height: 24),
+
+          // Contact de confiance
+          _buildTrustContactSection(),
           const SizedBox(height: 24),
 
           // Services d'urgence
@@ -217,10 +442,10 @@ class _EmergencyPageState extends State<EmergencyPage> {
         const SizedBox(width: 12),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: AppColors.getTextPrimaryColor(context),
           ),
         ),
       ],
@@ -234,7 +459,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
       return Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: service.color.withOpacity(0.3), width: 2),
           boxShadow: [
@@ -278,19 +503,19 @@ class _EmergencyPageState extends State<EmergencyPage> {
                       children: [
                         Text(
                           service.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                         const SizedBox(height: 4),
                         if (service.address != null) ...[
                           Text(
                             service.address!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                           const SizedBox(height: 4),

@@ -13,6 +13,10 @@ import 'package:provider/provider.dart';
 import 'package:drivers_app/theme/theme_provider.dart';
 
 import '../widgets/loading_dialog.dart';
+import 'package:drivers_app/pages/help_support_page.dart';
+import 'package:drivers_app/pages/terms_page.dart';
+import 'package:drivers_app/pages/privacy_page.dart';
+import 'package:drivers_app/pages/change_vehicle_page.dart';   // ✅ NOUVEAU
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -85,16 +89,12 @@ class _SettingsPageState extends State<SettingsPage>
         reason: 'Confirmez votre identité pour activer la biométrie',
       );
       if (!authenticated) {
-        if (mounted) {
-          _showSnackBar('Authentification échouée', isError: true);
-        }
+        if (mounted) _showSnackBar('Authentification échouée', isError: true);
         return;
       }
     }
-
     await BiometricService.setBiometricEnabled(value);
     setState(() => _biometricEnabled = value);
-
     if (mounted) {
       _showSnackBar(value ? '🔒 Biométrie activée' : '🔓 Biométrie désactivée');
     }
@@ -107,7 +107,6 @@ class _SettingsPageState extends State<SettingsPage>
       maxHeight: 1024,
       imageQuality: 85,
     );
-
     if (image == null) return;
     if (!mounted) return;
 
@@ -120,7 +119,6 @@ class _SettingsPageState extends State<SettingsPage>
     try {
       final folder = type == 'profile' ? 'profiles' : 'cars';
       final photoUrl = await SupabaseService.uploadPhoto(image.path, folder);
-
       if (photoUrl == null) throw Exception("Erreur lors de l'upload");
 
       Map<String, dynamic> updateData = {};
@@ -172,7 +170,9 @@ class _SettingsPageState extends State<SettingsPage>
         content: Text(
           "Êtes-vous sûr de vouloir vous déconnecter ?",
           style: TextStyle(
-              fontSize: 15, height: 1.5, color: theme.textTheme.bodyMedium?.color),
+              fontSize: 15,
+              height: 1.5,
+              color: theme.textTheme.bodyMedium?.color),
         ),
         actions: [
           TextButton(
@@ -190,7 +190,8 @@ class _SettingsPageState extends State<SettingsPage>
               await SupabaseService.signOut();
               if (mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const LoginScreen()),
                   (route) => false,
                 );
               }
@@ -198,7 +199,8 @@ class _SettingsPageState extends State<SettingsPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
               elevation: 0,
@@ -243,7 +245,9 @@ class _SettingsPageState extends State<SettingsPage>
             const SizedBox(height: 12),
             Text(
               "Toutes vos données seront définitivement supprimées :\n\n• Profil chauffeur\n• Historique des courses\n• Gains et statistiques\n\nCette action ne peut pas être annulée.",
-              style: TextStyle(height: 1.5, color: theme.textTheme.bodyMedium?.color),
+              style: TextStyle(
+                  height: 1.5,
+                  color: theme.textTheme.bodyMedium?.color),
             ),
           ],
         ),
@@ -265,18 +269,18 @@ class _SettingsPageState extends State<SettingsPage>
               try {
                 final userId = SupabaseService.getCurrentUser()?.id;
                 if (userId != null) {
-                  // ✅ Supprimer les données du chauffeur
                   final supabase = Supabase.instance.client;
-                  await supabase.from('driver_earnings').delete().eq('driver_id', userId);
-                  await supabase.from('trip_requests').update({'driver_id': null}).eq('driver_id', userId);
+                  await supabase
+                      .from('driver_earnings')
+                      .delete()
+                      .eq('driver_id', userId);
+                  await supabase
+                      .from('trip_requests')
+                      .update({'driver_id': null})
+                      .eq('driver_id', userId);
                   await supabase.from('drivers').delete().eq('id', userId);
-                  print('✅ Données chauffeur supprimées de Supabase');
                 }
-                // ✅ Vider le cache SQLite
                 await LocalDatabaseService.clearAll();
-                print('✅ Cache SQLite vidé');
-                
-                // ✅ Nettoyer les variables globales
                 clearDriverData();
                 await SupabaseService.signOut();
                 if (mounted) {
@@ -298,7 +302,8 @@ class _SettingsPageState extends State<SettingsPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
               elevation: 0,
@@ -335,13 +340,15 @@ class _SettingsPageState extends State<SettingsPage>
             const SizedBox(width: 12),
             Expanded(
                 child: Text(message,
-                    style: const TextStyle(fontWeight: FontWeight.w500))),
+                    style:
+                        const TextStyle(fontWeight: FontWeight.w500))),
           ],
         ),
         backgroundColor:
             isError ? const Color(0xFFEF4444) : const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         margin: const EdgeInsets.all(16),
         elevation: 8,
         duration: const Duration(seconds: 3),
@@ -377,13 +384,41 @@ class _SettingsPageState extends State<SettingsPage>
                     const SizedBox(height: 32),
 
                     // ── Photos ──
-                    _buildSectionHeader("Photos", Icons.photo_library_rounded, theme),
+                    _buildSectionHeader(
+                        "Photos", Icons.photo_library_rounded, theme),
                     const SizedBox(height: 14),
                     _buildPhotoSection(theme, isDark),
                     const SizedBox(height: 28),
 
+                    // ── ✅ NOUVEAU : Véhicule ──
+                    _buildSectionHeader(
+                        "Véhicule", Icons.directions_car_rounded, theme),
+                    const SizedBox(height: 14),
+                    _buildGlassCard(
+                      theme: theme,
+                      isDark: isDark,
+                      children: [
+                        _buildActionTile(
+                          icon: Icons.swap_horiz_rounded,
+                          title: "Changer de véhicule",
+                          subtitle:
+                              "Mettre à jour les infos et re-soumettre les documents",
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const ChangeVehiclePage()),
+                          ),
+                          theme: theme,
+                          iconColor: Colors.indigo,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+
                     // ── Préférences ──
-                    _buildSectionHeader("Préférences", Icons.tune_rounded, theme),
+                    _buildSectionHeader(
+                        "Préférences", Icons.tune_rounded, theme),
                     const SizedBox(height: 14),
                     _buildGlassCard(
                       theme: theme,
@@ -416,10 +451,25 @@ class _SettingsPageState extends State<SettingsPage>
                               title: "Mode Sombre",
                               subtitle: "Thème clair ou sombre",
                               value: themeProvider.isDarkMode,
-                              onChanged: (val) => themeProvider.toggleTheme(val),
+                              onChanged: (val) =>
+                                  themeProvider.toggleTheme(val),
                               theme: theme,
                             );
                           },
+                        ),
+                        _buildDivider(isDark),
+                        _buildActionTile(
+                          icon: Icons.explore_rounded,
+                          title: "Guide d'accueil de l'application",
+                          subtitle: "Réinitialiser et recommencer le guide",
+                          onTap: () async {
+                            await LocalDatabaseService.saveAppSetting('has_completed_guide', 'false');
+                            if (mounted) {
+                              _showSnackBar("🧭 Guide d'accueil réinitialisé. Retournez à l'accueil pour le recommencer.");
+                            }
+                          },
+                          theme: theme,
+                          iconColor: Colors.teal,
                         ),
                       ],
                     ),
@@ -427,7 +477,8 @@ class _SettingsPageState extends State<SettingsPage>
 
                     // ── Sécurité ──
                     if (_biometricAvailable) ...[
-                      _buildSectionHeader("Sécurité", Icons.shield_rounded, theme),
+                      _buildSectionHeader(
+                          "Sécurité", Icons.shield_rounded, theme),
                       const SizedBox(height: 14),
                       _buildGlassCard(
                         theme: theme,
@@ -449,7 +500,8 @@ class _SettingsPageState extends State<SettingsPage>
                     ],
 
                     // ── Support ──
-                    _buildSectionHeader("Aide & Support", Icons.headset_mic_rounded, theme),
+                    _buildSectionHeader(
+                        "Aide & Support", Icons.headset_mic_rounded, theme),
                     const SizedBox(height: 14),
                     _buildGlassCard(
                       theme: theme,
@@ -459,39 +511,48 @@ class _SettingsPageState extends State<SettingsPage>
                           icon: Icons.help_center_rounded,
                           title: "Centre d'aide",
                           subtitle: "FAQ et guides",
-                          onTap: () => _openUrl("https://lebontaxi.ht/help"),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const HelpSupportPage()),
+                          ),
                           theme: theme,
                         ),
                         _buildDivider(isDark),
                         _buildActionTile(
                           icon: Icons.email_rounded,
                           title: "Email",
-                          subtitle: "support@lebontaxi.ht",
-                          onTap: () => _openUrl("mailto:support@lebontaxi.ht"),
+                          subtitle: "constantlorvenson@gmail.com",
+                          onTap: () => _openUrl(
+                              "mailto:constantlorvenson@gmail.com?subject=Support%20Le%20Bon%20Taxi"),
                           theme: theme,
                         ),
                         _buildDivider(isDark),
                         _buildActionTile(
                           icon: Icons.phone_rounded,
                           title: "Téléphone",
-                          subtitle: "+509 1234 5678",
-                          onTap: () => _openUrl("tel:+50912345678"),
+                          subtitle: "+509 46 89 49 05",
+                          onTap: () => _openUrl("tel:+50946894905"),
                           theme: theme,
                         ),
                         _buildDivider(isDark),
                         _buildActionTile(
                           icon: Icons.chat_bubble_rounded,
                           title: "WhatsApp",
-                          subtitle: "Chat en direct",
-                          onTap: () => _openUrl("https://wa.me/50912345678"),
+                          subtitle: "+509 46 89 49 05",
+                          onTap: () =>
+                              _openUrl("https://wa.me/50946894905?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Le%20Bon%20Taxi"),
                           theme: theme,
+                          iconColor: const Color(0xFF25D366),
                         ),
                       ],
                     ),
                     const SizedBox(height: 28),
 
                     // ── Légal + À propos ──
-                    _buildSectionHeader("Informations", Icons.info_rounded, theme),
+                    _buildSectionHeader(
+                        "Informations", Icons.info_rounded, theme),
                     const SizedBox(height: 14),
                     _buildGlassCard(
                       theme: theme,
@@ -501,7 +562,11 @@ class _SettingsPageState extends State<SettingsPage>
                           icon: Icons.article_rounded,
                           title: "Conditions d'utilisation",
                           subtitle: "Voir les CGU",
-                          onTap: () => _openUrl("https://lebontaxi.ht/terms"),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const TermsPage()),
+                          ),
                           theme: theme,
                         ),
                         _buildDivider(isDark),
@@ -509,7 +574,11 @@ class _SettingsPageState extends State<SettingsPage>
                           icon: Icons.privacy_tip_rounded,
                           title: "Confidentialité",
                           subtitle: "Politique de données",
-                          onTap: () => _openUrl("https://lebontaxi.ht/privacy"),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const PrivacyPage()),
+                          ),
                           theme: theme,
                         ),
                         _buildDivider(isDark),
@@ -550,7 +619,8 @@ class _SettingsPageState extends State<SettingsPage>
       expandedHeight: 220,
       floating: false,
       pinned: true,
-      backgroundColor: isDark ? const Color(0xFF1E1B4B) : const Color(0xFF6366F1),
+      backgroundColor:
+          isDark ? const Color(0xFF1E1B4B) : const Color(0xFF6366F1),
       elevation: 0,
       leading: Container(
         margin: const EdgeInsets.all(8),
@@ -559,7 +629,8 @@ class _SettingsPageState extends State<SettingsPage>
           borderRadius: BorderRadius.circular(12),
         ),
         child: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon:
+              const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -580,13 +651,20 @@ class _SettingsPageState extends State<SettingsPage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [const Color(0xFF1E1B4B), const Color(0xFF312E81), const Color(0xFF3730A3)]
-                  : [const Color(0xFF4F46E5), const Color(0xFF6366F1), const Color(0xFF818CF8)],
+                  ? [
+                      const Color(0xFF1E1B4B),
+                      const Color(0xFF312E81),
+                      const Color(0xFF3730A3)
+                    ]
+                  : [
+                      const Color(0xFF4F46E5),
+                      const Color(0xFF6366F1),
+                      const Color(0xFF818CF8)
+                    ],
             ),
           ),
           child: Stack(
             children: [
-              // Motifs décoratifs
               Positioned(
                 top: -30,
                 right: -30,
@@ -611,7 +689,6 @@ class _SettingsPageState extends State<SettingsPage>
                   ),
                 ),
               ),
-              // Avatar
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -625,10 +702,12 @@ class _SettingsPageState extends State<SettingsPage>
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
+                              border:
+                                  Border.all(color: Colors.white, width: 3),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.25),
+                                  color:
+                                      Colors.black.withValues(alpha: 0.25),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -642,7 +721,8 @@ class _SettingsPageState extends State<SettingsPage>
                                   : null,
                               child: driverPhoto.isEmpty
                                   ? const Icon(Icons.person,
-                                      size: 48, color: Color(0xFF6366F1))
+                                      size: 48,
+                                      color: Color(0xFF6366F1))
                                   : null,
                             ),
                           ),
@@ -654,8 +734,8 @@ class _SettingsPageState extends State<SettingsPage>
                               decoration: BoxDecoration(
                                 color: const Color(0xFF10B981),
                                 shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2.5),
+                                border: Border.all(
+                                    color: Colors.white, width: 2.5),
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFF10B981)
@@ -715,13 +795,18 @@ class _SettingsPageState extends State<SettingsPage>
           Container(
               width: 1,
               height: 35,
-              color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+              color: isDark
+                  ? Colors.grey.shade700
+                  : Colors.grey.shade200),
           _buildStatChip("🎨", carColor.isNotEmpty ? carColor : "—", theme),
           Container(
               width: 1,
               height: 35,
-              color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
-          _buildStatChip("🔢", carNumber.isNotEmpty ? carNumber : "—", theme),
+              color: isDark
+                  ? Colors.grey.shade700
+                  : Colors.grey.shade200),
+          _buildStatChip(
+              "🔢", carNumber.isNotEmpty ? carNumber : "—", theme),
         ],
       ),
     );
@@ -801,7 +886,8 @@ class _SettingsPageState extends State<SettingsPage>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.12),
+              color: AppColors.primary
+                  .withValues(alpha: isDark ? 0.15 : 0.12),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -836,7 +922,8 @@ class _SettingsPageState extends State<SettingsPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.edit_rounded, size: 12, color: AppColors.primary),
+                const Icon(Icons.edit_rounded,
+                    size: 12, color: AppColors.primary),
                 const SizedBox(width: 4),
                 Text("Modifier",
                     style: TextStyle(
@@ -855,7 +942,8 @@ class _SettingsPageState extends State<SettingsPage>
   // COMPOSANTS RÉUTILISABLES
   // ============================================================
 
-  Widget _buildSectionHeader(String title, IconData icon, ThemeData theme) {
+  Widget _buildSectionHeader(
+      String title, IconData icon, ThemeData theme) {
     return Row(
       children: [
         Container(
@@ -892,7 +980,8 @@ class _SettingsPageState extends State<SettingsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            color:
+                Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -956,7 +1045,8 @@ class _SettingsPageState extends State<SettingsPage>
               value: value,
               onChanged: onChanged,
               activeColor: AppColors.primary,
-              activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
+              activeTrackColor:
+                  AppColors.primary.withValues(alpha: 0.3),
             ),
           ),
         ],
@@ -970,24 +1060,27 @@ class _SettingsPageState extends State<SettingsPage>
     required String subtitle,
     required VoidCallback onTap,
     required ThemeData theme,
+    Color? iconColor,
   }) {
+    final color = iconColor ?? AppColors.primary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 22),
+                child: Icon(icon, color: color, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1009,7 +1102,8 @@ class _SettingsPageState extends State<SettingsPage>
               ),
               Icon(Icons.arrow_forward_ios_rounded,
                   size: 16,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5)),
+                  color: theme.textTheme.bodySmall?.color
+                      ?.withValues(alpha: 0.5)),
             ],
           ),
         ),
@@ -1025,7 +1119,8 @@ class _SettingsPageState extends State<SettingsPage>
     required bool isDark,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
           Container(
@@ -1046,9 +1141,11 @@ class _SettingsPageState extends State<SettingsPage>
                     color: theme.textTheme.bodyLarge?.color)),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.1),
+              color: AppColors.primary
+                  .withValues(alpha: isDark ? 0.2 : 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -1073,8 +1170,8 @@ class _SettingsPageState extends State<SettingsPage>
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border:
-            Border.all(color: Colors.red.withValues(alpha: 0.15), width: 1.5),
+        border: Border.all(
+            color: Colors.red.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.red.withValues(alpha: isDark ? 0.1 : 0.06),
@@ -1086,10 +1183,10 @@ class _SettingsPageState extends State<SettingsPage>
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // Header avec dégradé rouge subtil
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.red.withValues(alpha: isDark ? 0.15 : 0.06),
             ),
@@ -1147,7 +1244,8 @@ class _SettingsPageState extends State<SettingsPage>
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               Container(
@@ -1179,7 +1277,8 @@ class _SettingsPageState extends State<SettingsPage>
               ),
               Icon(Icons.arrow_forward_ios_rounded,
                   size: 16,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5)),
+                  color: theme.textTheme.bodySmall?.color
+                      ?.withValues(alpha: 0.5)),
             ],
           ),
         ),
@@ -1218,7 +1317,8 @@ class _SettingsPageState extends State<SettingsPage>
             "Fait avec ❤️ en Haïti",
             style: TextStyle(
                 fontSize: 12,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6)),
+                color: theme.textTheme.bodySmall?.color
+                    ?.withValues(alpha: 0.6)),
           ),
         ],
       ),

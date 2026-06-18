@@ -102,6 +102,7 @@ class _DriversPageState extends State<DriversPage>
                     child: TextField(
                       controller: searchController,
                       style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                      textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
                         hintText: "Rechercher par nom, téléphone ou détails de la voiture...",
                         hintStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
@@ -116,6 +117,12 @@ class _DriversPageState extends State<DriversPage>
                         setState(() {
                           searchQuery = value.toLowerCase();
                         });
+                      },
+                      onSubmitted: (value) {
+                        setState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                        FocusScope.of(context).unfocus();
                       },
                     ),
                   ),
@@ -161,6 +168,7 @@ class _DriversPageState extends State<DriversPage>
                           cMethods.header(2, "VÉHICULE", isDark: isDark),
                           cMethods.header(1, "NOTE", isDark: isDark),
                           cMethods.header(1, "EN LIGNE", isDark: isDark),
+                          cMethods.header(1, "DOCUMENTS", isDark: isDark),
                           cMethods.header(1, "STATUT", isDark: isDark),
                           cMethods.header(1, "ACTION", isDark: isDark),
                         ],

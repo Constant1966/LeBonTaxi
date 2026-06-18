@@ -20,6 +20,15 @@ bool get isUserSubscribed =>
     userSubscriptionEndDate != null && 
     userSubscriptionEndDate!.isAfter(DateTime.now());
 
+// ✅ Infos Parrainage (Supabase)
+String? currentUserReferralCode;
+String? currentUserReferredById;
+double currentReferralDiscount = 0.0;
+String? currentReferralDiscountType; // 'percentage' ou 'fixed'
+String? activeReferralRewardId;
+String globalReferralShareMessage = "Rejoins-moi sur LeBonTaxi ! Télécharge l'application et utilise mon code promo {code} lors de ton inscription pour obtenir des réductions.";
+
+
 // ✅ Tarification globale (Supabase app_settings)
 double globalBaseFare = 50.0;
 double globalPerKmRate = 150.0;
@@ -54,6 +63,13 @@ void clearUserData() {
   userSubscriptionPlanId = null;
   userSubscriptionEndDate = null;
   currentUserDiscount = 0.0;
+
+  // Réinitialiser les infos de parrainage
+  currentUserReferralCode = null;
+  currentUserReferredById = null;
+  currentReferralDiscount = 0.0;
+  currentReferralDiscountType = null;
+  activeReferralRewardId = null;
 
   print("🧹 Données utilisateur effacées");
 }

@@ -201,6 +201,11 @@ class _FavoriteLocationsPageSupabaseState extends State<FavoriteLocationsPageSup
                         controller: _searchController,
                         focusNode: _searchFocusNode,
                         onChanged: _onSearchChanged,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (value) {
+                          _debounceTimer?.cancel();
+                          _searchPlaces(value);
+                        },
                         decoration: InputDecoration(
                           hintText: "Rechercher une adresse à ajouter...",
                           hintStyle: TextStyle(color: Colors.grey.shade500),

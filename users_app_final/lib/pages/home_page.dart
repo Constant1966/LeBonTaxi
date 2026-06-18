@@ -20,11 +20,14 @@ import 'package:users_app/theme/app_colors.dart';
 import 'package:users_app/services/osm_map_service.dart';
 import 'package:users_app/services/osrm_routing_service.dart';
 import 'package:users_app/widgets/modern_drawer_supabase.dart';
+import 'package:users_app/widgets/onboarding_guide_overlay.dart';
+import 'package:users_app/services/local_database_service.dart';
 import 'package:users_app/widgets/payment_dialog_supabase.dart';
 import 'package:users_app/widgets/rating_dialog_supabase.dart';
 import 'package:users_app/pages/emergency_page.dart';
 import 'package:users_app/pages/trip_chat_page.dart';
 import 'package:users_app/services/trip_request_service.dart';
+import 'package:users_app/pages/referral_page.dart';
 
 import '../global/global_var_supabase.dart';
 import '../services/trip_timeout_service.dart';
@@ -49,9 +52,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Position? _currentPosition;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final CommonMethods _cMethods = CommonMethods();
+  bool _showGuide = false;
 
   // États de l'interface
-  double _searchContainerHeight = 276;
+  double _searchContainerHeight = 390;
   double _rideDetailsHeight = 0;
   double _driverDetailsHeight = 0;
 
@@ -121,6 +125,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   RealtimeChannel? _adminMessageChannel;
   RealtimeChannel? _appSettingsChannel;
 
+  bool _isLocationDialogOpen = false;
+  Timer? _locationServiceTimer;
+  StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -141,6 +149,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _initNetworkMonitoring();
     _subscribeToAdminMessages();
     _subscribeToAppSettings();
+    _listenToLocationServiceStatus();
+    _checkShowGuide();
+  }
+
+  Future<void> _checkShowGuide() async {
+    final completed = await LocalDatabaseService.getAppSetting('has_completed_guide');
+    if (completed != 'true') {
+      if (mounted) {
+        setState(() {
+          _showGuide = true;
+        });
+      }
+    }
   }
 
   // ✅ WebSocket: Écouter les messages admin en temps réel
@@ -149,6 +170,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _adminMessageChannel = SupabaseService.subscribeToAdminMessages(
       onNewMessage: (msgData) async {
         if (!mounted) return;
+
+        // Éviter d'afficher une notification ou un popup pour sa propre réponse
+        final recipientName = msgData['recipient_name']?.toString() ?? '';
+        if (recipientName.startsWith('↩')) {
+          return;
+        }
+
         final title = msgData['title']?.toString() ?? 'Le Bon Taxi';
         final message = msgData['message']?.toString() ?? '';
         // Notification système
@@ -281,6 +309,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           
           // ✅ Charger le statut d'abonnement via la méthode centralisée
           await SupabaseService.loadUserSubscriptionStatus();
+          // ✅ Charger la réduction de parrainage active
+          await SupabaseService.loadActiveReferralReward();
           if (mounted) setState(() {});
 
         } else {
@@ -302,9 +332,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  void _listenToLocationServiceStatus() {
+    _serviceStatusSubscription = Geolocator.getServiceStatusStream().listen((ServiceStatus status) {
+      if (status == ServiceStatus.disabled) {
+        _promptEnableLocationService();
+      } else {
+        if (_isLocationDialogOpen && mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    });
+  }
+
   Future<void> _checkLocationPermission() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (!serviceEnabled) {
+      await _promptEnableLocationService();
+      return;
+    }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -314,6 +359,83 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse) {
       await _getCurrentLocation();
+    }
+  }
+
+  Future<void> _promptEnableLocationService() async {
+    if (_isLocationDialogOpen) return;
+    _isLocationDialogOpen = true;
+
+    // Démarre un Timer pour vérifier l'état du GPS périodiquement
+    _locationServiceTimer?.cancel();
+    _locationServiceTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      final isEnabled = await Geolocator.isLocationServiceEnabled();
+      if (isEnabled) {
+        timer.cancel();
+        if (_isLocationDialogOpen && mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    });
+
+    if (!mounted) return;
+
+    // Attendre la fin du build frame actuel pour éviter des conflits d'affichage de dialog
+    await Future.delayed(Duration.zero);
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return PopScope(
+          canPop: false, // Bloquer le retour arrière
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.location_off, color: AppColors.error, size: 28),
+                const SizedBox(width: 12),
+                const Text("Localisation requise"),
+              ],
+            ),
+            content: const Text(
+              "Le service de localisation (GPS) est désactivé. Veuillez l'activer dans vos paramètres pour utiliser Le Bon Taxi.",
+              style: TextStyle(fontSize: 15, height: 1.4),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () async {
+                  await Geolocator.openLocationSettings();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text("Activer la localisation"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    _isLocationDialogOpen = false;
+    _locationServiceTimer?.cancel();
+
+    // Re-vérifier après fermeture si le service est bien actif
+    final isEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!isEnabled) {
+      // Si toujours inactif, redemander sans arrêt
+      await _promptEnableLocationService();
+    } else {
+      // Si actif, lancer la permission et la géolocalisation
+      await _checkLocationPermission();
     }
   }
 
@@ -998,7 +1120,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
       }
 
-      _cMethods.displaySnackBar("✅ $_driverName a accepté votre demande !", context);
     } else if (_tripStatus != status) {
       // Pour les autres statuts (arrived, ontrip, completed, ended, cancelled)
       setState(() {
@@ -1013,7 +1134,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           break;
 
         case 'ontrip':
-          _cMethods.displaySnackBar("🚀 Course en cours", context);
           break;
 
         // ✅ FIX #3: Le driver envoie 'completed', pas 'ended'
@@ -1410,10 +1530,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final String duration = routeData.durationText;
 
         final distanceKm = routeData.distanceInKm;
-        // ✅ Calcul centralisé avec réduction abonnement
+        // ✅ Calcul centralisé avec réduction abonnement et parrainage
         final fare = FareCalculator.calculate(
           distanceKm: distanceKm,
           discountPercentage: currentUserDiscount,
+          referralDiscountValue: currentReferralDiscount,
+          referralDiscountType: currentReferralDiscountType,
         );
         final fareAmount = "$fare HTG";
 
@@ -1474,16 +1596,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _searchContainerHeight = 0;
           _rideDetailsHeight = 320;
         });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("✅ Favori sélectionné !"),
-              backgroundColor: AppColors.success,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
       }
     } catch (e) {
       print("❌ Erreur favori: $e");
@@ -1574,13 +1686,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         print("✅ Route affichée: $distance, $duration, $fareAmount");
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✅ Destination confirmée !"),
-            backgroundColor: AppColors.success,
-          ),
-        );
-
         return; // ✅ IMPORTANT: Sortir ici
       }
 
@@ -1665,10 +1770,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         if (routeData != null) {
           final distanceKm = routeData.distanceInKm;
-          // ✅ Calcul centralisé avec réduction abonnement
+          // ✅ Calcul centralisé avec réduction abonnement et parrainage
           final fare = FareCalculator.calculate(
             distanceKm: distanceKm,
             discountPercentage: currentUserDiscount,
+            referralDiscountValue: currentReferralDiscount,
+            referralDiscountType: currentReferralDiscountType,
           );
 
           setState(() {
@@ -1799,10 +1906,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         if (routeData != null) {
           final distanceKm = routeData.distanceInKm;
-          // ✅ Calcul centralisé avec réduction abonnement
+          // ✅ Calcul centralisé avec réduction abonnement et parrainage
           final fare = FareCalculator.calculate(
             distanceKm: distanceKm,
             discountPercentage: currentUserDiscount,
+            referralDiscountValue: currentReferralDiscount,
+            referralDiscountType: currentReferralDiscountType,
           );
 
           setState(() {
@@ -1896,7 +2005,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _tripStatusPollingTimer?.cancel();
 
     setState(() {
-      _searchContainerHeight = 276;
+      _searchContainerHeight = 390;
       _rideDetailsHeight = 0;
       _driverDetailsHeight = 0;
       _isSearchingDriver = false;
@@ -2003,6 +2112,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _searchTimer?.cancel();
     _driverTrackingService?.dispose();
     _networkSubscription?.cancel();
+    _locationServiceTimer?.cancel();
+    _serviceStatusSubscription?.cancel();
     super.dispose();
   }
 
@@ -2055,6 +2166,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           if (_driverDetailsHeight > 0) _buildDriverDetailsEnhanced(),
 
           _buildMapControls(),
+          if (_showGuide)
+            OnboardingGuideOverlay(
+              onSkipOrFinish: () async {
+                await LocalDatabaseService.saveAppSetting('has_completed_guide', 'true');
+                if (mounted) {
+                  setState(() {
+                    _showGuide = false;
+                  });
+                }
+              },
+            ),
         ],
       ),
     );
@@ -2070,7 +2192,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -2131,7 +2253,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color, width: 2),
           boxShadow: [
@@ -2156,13 +2278,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         height: _searchContainerHeight,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black12,
               blurRadius: 15,
@@ -2184,16 +2306,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         "Où allez-vous ?",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 16),
                       _buildSearchButton(),
+                      const SizedBox(height: 12),
+                      _buildReferralPromoBanner(),
                       const SizedBox(height: 16),
                       _buildQuickAccessRow(),
                     ],
@@ -2201,6 +2325,82 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               )
             : null,
+      ),
+    );
+  }
+
+  Widget _buildReferralPromoBanner() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ReferralPage(),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF818CF8), Color(0xFF6366F1)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.card_giftcard,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Offrez des réductions, gagnez des trajets !",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    "Partagez votre code promo avec vos amis.",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: Colors.white,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2222,18 +2422,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.getBackgroundColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.getBorderColor(context)),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.search, color: AppColors.textSecondary),
-            SizedBox(width: 12),
+            Icon(Icons.search, color: AppColors.getTextSecondaryColor(context)),
+            const SizedBox(width: 12),
             Text(
               "Rechercher une destination",
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondaryColor(context),
                 fontSize: 15,
               ),
             ),
@@ -2394,13 +2594,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         height: _rideDetailsHeight,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black12,
               blurRadius: 15,
@@ -2418,11 +2618,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Détails de la course",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                         IconButton(
@@ -2430,7 +2631,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           onPressed: () {
                             setState(() {
                               _rideDetailsHeight = 0;
-                              _searchContainerHeight = 276;
+                              _searchContainerHeight = 390;
                               _polylines.clear();
                               _markers.removeWhere((m) =>
                                   m.key == const Key("pickUp") ||
@@ -2452,7 +2653,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: AppColors.getBackgroundColor(context),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -2466,7 +2667,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           Container(
                             width: 1,
                             height: 40,
-                            color: AppColors.border,
+                            color: AppColors.getBorderColor(context),
                           ),
                           _buildInfoItem(
                             Icons.access_time,
@@ -2687,18 +2888,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondaryColor(context),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: AppColors.getTextPrimaryColor(context),
           ),
         ),
       ],
@@ -2717,14 +2918,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         snap: true,
         snapSizes: const [0.25, 0.45, 0.75],
         builder: (context, scrollController) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(28),
                 topRight: Radius.circular(28),
               ),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black26,
                   blurRadius: 20,
@@ -2743,7 +2945,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -2834,10 +3036,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           children: [
                             Text(
                               _driverName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -2892,9 +3094,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: AppColors.getBackgroundColor(context),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                      border: Border.all(color: AppColors.getBorderColor(context).withOpacity(0.5)),
                     ),
                     child: Row(
                       children: [
@@ -2918,7 +3120,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               if (_carColor.isNotEmpty)
                                 Text(
                                   _carColor,
-                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                  style: TextStyle(fontSize: 12, color: AppColors.getTextSecondaryColor(context)),
                                 ),
                             ],
                           ),
@@ -2954,6 +3156,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       trafficLabel: OSRMRoutingService.getTrafficEstimation().label,
                       trafficMultiplier: OSRMRoutingService.getTrafficEstimation().multiplier,
                       discountPercentage: currentUserDiscount,
+                      referralDiscountValue: currentReferralDiscount,
+                      referralDiscountType: currentReferralDiscountType,
                     ),
                   ),
                 ],
@@ -3174,6 +3378,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ? AppColors.success
         : (_searchAttempt >= 2 ? AppColors.warning : AppColors.primary);
 
+    final isDarkSearch = Theme.of(context).brightness == Brightness.dark;
     return Positioned(
       left: 0,
       right: 0,
@@ -3182,7 +3387,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
@@ -3208,7 +3413,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isFound ? AppColors.success : Colors.grey.shade300,
+                    color: isFound ? AppColors.success : (isDarkSearch ? Colors.grey.shade700 : Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -3242,7 +3447,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: isFound ? AppColors.success : AppColors.textPrimary,
+                      color: isFound ? AppColors.success : AppColors.getTextPrimaryColor(context),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -3258,7 +3463,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     key: ValueKey(_searchStatus),
                     style: TextStyle(
                       fontSize: 14,
-                      color: isFound ? AppColors.success : Colors.grey.shade600,
+                      color: isFound ? AppColors.success : AppColors.getTextSecondaryColor(context),
                       fontWeight: isFound ? FontWeight.w600 : FontWeight.normal,
                     ),
                     textAlign: TextAlign.center,
@@ -3535,7 +3740,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: Colors.grey.shade600,
+            color: AppColors.getTextSecondaryColor(context),
             height: 1.2,
           ),
           textAlign: TextAlign.center,

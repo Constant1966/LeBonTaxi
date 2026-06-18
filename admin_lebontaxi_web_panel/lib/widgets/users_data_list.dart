@@ -1,6 +1,8 @@
 import '../constants/app_colors.dart';
 import '../methods/common_methods.dart';
 import '../services/admin_log_service.dart';
+import '../dashboard/side_navigation_drawer.dart';
+import '../pages/communication_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -186,6 +188,9 @@ class _UsersDataListState extends State<UsersDataList> {
                     if (!isBlocked) const PopupMenuItem(value: 'suspend', child: Row(children: [
                       Icon(Icons.timer_off, size: 18, color: Color(0xFFF59E0B)), SizedBox(width: 8), Text("Suspendre"),
                     ])),
+                    const PopupMenuItem(value: 'message', child: Row(children: [
+                      Icon(Icons.message, size: 18, color: Color(0xFF3B82F6)), SizedBox(width: 8), Text("Contacter"),
+                    ])),
                     const PopupMenuItem(value: 'history', child: Row(children: [
                       Icon(Icons.history, size: 18, color: Color(0xFF6366F1)), SizedBox(width: 8), Text("Historique"),
                     ])),
@@ -194,6 +199,17 @@ class _UsersDataListState extends State<UsersDataList> {
                     switch (val) {
                       case 'block': _handleBlockAction(user["id"]?.toString() ?? "", user["block_status"] ?? "no", user["name"]?.toString() ?? "Utilisateur"); break;
                       case 'suspend': _handleSuspend(user["id"]?.toString() ?? "", user["name"]?.toString() ?? "Utilisateur"); break;
+                      case 'message':
+                        final drawerState = context.findAncestorStateOfType<SideNavigationDrawerState>();
+                        if (drawerState != null) {
+                          drawerState.setChosenScreen(
+                            CommunicationPage(
+                              initialRecipientId: user["id"]?.toString(),
+                            ),
+                            CommunicationPage.id,
+                          );
+                        }
+                        break;
                       case 'history': _showSuspensionHistory(user["id"]?.toString() ?? "", user["name"]?.toString() ?? "Utilisateur"); break;
                     }
                   },

@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:users_app/theme/app_colors.dart';
 import 'package:users_app/services/local_database_service.dart';
 
-/// Page affichant les messages/notifications de l'admin
+/// Page de notifications/messages admin avec réponses — style messagerie
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
 
@@ -18,6 +18,8 @@ class _NotificationsPageState extends State<NotificationsPage>
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _userId;
+  final _replyController = TextEditingController();
+  final _scrollController = ScrollController();
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -38,12 +40,13 @@ class _NotificationsPageState extends State<NotificationsPage>
   @override
   void dispose() {
     _animController.dispose();
+    _replyController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  /// Charger le cache SQLite d'abord (démarrage rapide), puis Supabase
+  /// Charger le cache SQLite d'abord, puis Supabase
   Future<void> _loadCachedThenFresh() async {
-    // 1. Cache SQLite — affichage instantané
     try {
       final cached = await LocalDatabaseService.getCachedAdminMessages();
       if (cached.isNotEmpty && mounted) {
@@ -56,8 +59,6 @@ class _NotificationsPageState extends State<NotificationsPage>
     } catch (e) {
       print('⚠️ Cache SQLite non disponible: $e');
     }
-
-    // 2. Données fraîches depuis Supabase
     await _loadFromSupabase();
   }
 
@@ -67,11 +68,10 @@ class _NotificationsPageState extends State<NotificationsPage>
           .from('admin_messages')
           .select()
           .or('recipient_type.eq.all,recipient_type.eq.all_users,and(recipient_type.eq.single_user,recipient_id.eq.$_userId)')
+          .or('is_deleted_by_recipient.eq.false,is_deleted_by_recipient.is.null')
           .order('created_at', ascending: false);
 
       final messages = List<Map<String, dynamic>>.from(data);
-
-      // Sauvegarder dans SQLite pour le prochain démarrage
       await LocalDatabaseService.saveAdminMessages(messages);
 
       if (mounted) {
@@ -84,18 +84,98 @@ class _NotificationsPageState extends State<NotificationsPage>
       }
     } catch (e) {
       print('❌ Erreur chargement notifications: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _isRefreshing = false;
-        });
-      }
+      if (mounted) setState(() { _isLoading = false; });
     }
   }
 
   Future<void> _onRefresh() async {
-    setState(() => _isRefreshing = true);
     await _loadFromSupabase();
+  }
+
+  Future<void> _showClearChatConfirmation() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Effacer l'historique"),
+        content: const Text("Êtes-vous sûr de vouloir effacer votre historique de messages ? Les messages personnels seront définitivement masqués."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Annuler"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Effacer", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() => _isLoading = true);
+      try {
+        if (_userId != null) {
+          await _supabase.from('admin_messages')
+              .update({'is_deleted_by_recipient': true})
+              .eq('recipient_id', _userId!)
+              .eq('recipient_type', 'single_user');
+        }
+        
+        await LocalDatabaseService.clearAdminMessages();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Historique effacé"), backgroundColor: Colors.green),
+          );
+          _loadFromSupabase();
+        }
+      } catch (e) {
+        print('❌ Erreur effacement historique: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erreur lors de l'effacement : $e"), backgroundColor: Colors.red),
+          );
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
+
+  Future<void> _sendReply(Map<String, dynamic> msg) async {
+    final text = _replyController.text.trim();
+    if (text.isEmpty) return;
+    _replyController.clear();
+
+    try {
+      final myEmail = _supabase.auth.currentUser?.email ?? 'user';
+      final myData = await _supabase.from('users')
+          .select('name').eq('id', _userId!).maybeSingle();
+      final myName = myData?['name']?.toString() ?? 'Client';
+
+      await _supabase.from('admin_messages').insert({
+        'sender_admin_email': myEmail,
+        'recipient_type': 'single_user',
+        'recipient_id': _userId,
+        'recipient_name': '↩ Réponse de $myName',
+        'title': 'RE: ${msg['title'] ?? ''}',
+        'message': text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("✅ Réponse envoyée"),
+              backgroundColor: Colors.green),
+        );
+        _loadFromSupabase();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   String _formatDate(String? dateStr) {
@@ -104,7 +184,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       final date = DateTime.parse(dateStr);
       final now = DateTime.now();
       final diff = now.difference(date);
-
+      if (diff.inMinutes < 1) return "maintenant";
       if (diff.inMinutes < 60) return 'il y a ${diff.inMinutes} min';
       if (diff.inHours < 24) return 'il y a ${diff.inHours}h';
       if (diff.inDays < 7) return 'il y a ${diff.inDays}j';
@@ -122,12 +202,37 @@ class _NotificationsPageState extends State<NotificationsPage>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Notifications"),
-        backgroundColor: isDark ? const Color(0xFF1E1B4B) : AppColors.primary,
-        foregroundColor: Colors.white,
         elevation: 0,
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        foregroundColor: theme.textTheme.bodyLarge?.color,
+        title: Row(
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.campaign, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Le Bon Taxi",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
+                        color: theme.textTheme.bodyLarge?.color)),
+                Text("Notifications",
+                    style: TextStyle(fontSize: 12,
+                        color: theme.textTheme.bodySmall?.color)),
+              ],
+            ),
+          ],
+        ),
         actions: [
-          if (_messages.isNotEmpty)
+          if (_messages.isNotEmpty) ...[
             IconButton(
               icon: const Icon(Icons.done_all),
               tooltip: "Tout marquer comme lu",
@@ -143,7 +248,18 @@ class _NotificationsPageState extends State<NotificationsPage>
                 }
               },
             ),
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+              tooltip: "Effacer l'historique",
+              onPressed: _showClearChatConfirmation,
+            ),
+          ],
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1,
+              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -154,9 +270,11 @@ class _NotificationsPageState extends State<NotificationsPage>
                   child: RefreshIndicator(
                     onRefresh: _onRefresh,
                     child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       itemCount: _messages.length,
-                      itemBuilder: (_, i) => _buildMessageCard(_messages[i], isDark, theme),
+                      itemBuilder: (_, i) => _buildMessageBubble(
+                          _messages[i], isDark, theme),
                     ),
                   ),
                 ),
@@ -171,147 +289,232 @@ class _NotificationsPageState extends State<NotificationsPage>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.notifications_off_outlined,
-              size: 64,
-              color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
-            ),
+            child: Icon(Icons.notifications_off_outlined,
+                size: 64,
+                color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
           ),
           const SizedBox(height: 20),
-          Text(
-            "Aucune notification",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-            ),
-          ),
+          Text("Aucune notification",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
           const SizedBox(height: 8),
-          Text(
-            "Les messages de l'admin apparaîtront ici",
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
-            ),
-          ),
+          Text("Les messages de l'admin apparaîtront ici",
+              style: TextStyle(fontSize: 14,
+                  color: isDark ? Colors.grey.shade500 : Colors.grey.shade500)),
         ],
       ),
     );
   }
 
-  Widget _buildMessageCard(Map<String, dynamic> msg, bool isDark, ThemeData theme) {
-    final recipientType = msg['recipient_type']?.toString() ?? '';
-    final isGlobal = recipientType == 'all' || recipientType == 'all_users';
-    final isDirect = recipientType == 'single_user';
-    final title = msg['title']?.toString() ?? 'Notification';
+  Widget _buildMessageBubble(
+      Map<String, dynamic> msg, bool isDark, ThemeData theme) {
+    final recipientName = msg['recipient_name']?.toString() ?? '';
+    final isReply = recipientName.startsWith('↩');
+    final isDirect = msg['recipient_type'] == 'single_user';
+    final title = msg['title']?.toString() ?? '';
     final message = msg['message']?.toString() ?? '';
     final dateStr = _formatDate(msg['created_at']?.toString());
+    final time = msg['created_at'] != null
+        ? DateTime.tryParse(msg['created_at'].toString())
+        : null;
 
-    final Color accentColor = isGlobal
-        ? Colors.amber
-        : isDirect
-            ? AppColors.primary
-            : Colors.orange;
-
-    final IconData icon = isGlobal
-        ? Icons.campaign
-        : isDirect
-            ? Icons.person
-            : Icons.groups;
-
-    final String badge = isGlobal ? "Tous" : isDirect ? "Privé" : "Broadcast";
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+    return Align(
+      alignment: isReply ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.82,
         ),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isReply ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // En-tête
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: accentColor, size: 22),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isReply
+                    ? AppColors.primary
+                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(isReply ? 18 : 4),
+                  bottomRight: Radius.circular(isReply ? 4 : 18),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                    blurRadius: 6, offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment:
+                    isReply ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  // Title for admin messages
+                  if (!isReply && title.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isDirect ? Icons.person : Icons.campaign,
+                            size: 14,
+                            color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(title,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w700, fontSize: 13,
+                                    color: isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1))),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Message body
+                  Text(message,
+                      style: TextStyle(
+                          color: isReply
+                              ? Colors.white
+                              : theme.textTheme.bodyLarge?.color,
+                          fontSize: 14, height: 1.5)),
+
+                  // Time
+                  if (time != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} • $dateStr",
+                      style: TextStyle(fontSize: 10,
+                          color: isReply
+                              ? Colors.white60
+                              : Colors.grey.shade500),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Reply button for direct messages
+            if (!isReply && isDirect)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: GestureDetector(
+                  onTap: () => _showReplySheet(msg),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dateStr,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: theme.textTheme.bodySmall?.color,
-                        ),
-                      ),
+                      Icon(Icons.reply, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text("Répondre",
+                          style: TextStyle(fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReplySheet(Map<String, dynamic> msg) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    _replyController.clear();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    badge,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: accentColor,
-                    ),
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Corps du message
-            Text(
-              message,
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.textTheme.bodyMedium?.color,
-                height: 1.5,
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text("Répondre à :",
+                  style: TextStyle(fontSize: 12,
+                      color: theme.textTheme.bodySmall?.color)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(msg['title']?.toString() ?? '',
+                    style: TextStyle(fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: theme.textTheme.bodyLarge?.color)),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _replyController,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                      decoration: InputDecoration(
+                        hintText: "Votre réponse...",
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _sendReply(msg);
+                      },
+                      icon: const Icon(Icons.send_rounded,
+                          color: Colors.white, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -74,7 +74,8 @@ class _GridPainter extends CustomPainter {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final bool showInactivityMessage;
+  const LoginPage({super.key, this.showInactivityMessage = false});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -108,6 +109,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
+    if (widget.showInactivityMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _snack("Vous avez été déconnecté suite à une longue période d'inactivité.", true);
+      });
+    }
 
     _pulseCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 6))..repeat();
     _entranceCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..forward();
@@ -742,6 +749,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               _input(_emailCtrl, "Adresse e-mail", Icons.alternate_email_rounded,
                                 hint: "admin@lebontaxi.com",
                                 type: TextInputType.emailAddress,
+                                onSubmitted: (_) => _handleAuth(),
                                 validator: (v) {
                                   if (v == null || v.isEmpty) return 'Requis';
                                   if (!v.contains('@') || !v.contains('.')) return 'E-mail invalide';
@@ -760,6 +768,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                     color: const Color(0xFF475569), size: 20,
                                   ),
                                 ),
+                                onSubmitted: (_) => _handleAuth(),
                                 validator: (v) {
                                   if (v == null || v.isEmpty) return 'Requis';
                                   if (v.length < 6) return 'Minimum 6 caractères';
@@ -863,6 +872,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     bool obscure = false,
     Widget? suffix,
     String? Function(String?)? validator,
+    void Function(String)? onSubmitted,
   }) {
     return _FocusAwareInput(
       controller: ctrl,
@@ -873,6 +883,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       obscure: obscure,
       suffix: suffix,
       validator: validator,
+      onSubmitted: onSubmitted,
     );
   }
 
@@ -1002,6 +1013,7 @@ class _FocusAwareInput extends StatefulWidget {
     this.obscure = false,
     this.suffix,
     this.validator,
+    this.onSubmitted,
   });
 
   final TextEditingController controller;
@@ -1012,6 +1024,7 @@ class _FocusAwareInput extends StatefulWidget {
   final bool obscure;
   final Widget? suffix;
   final String? Function(String?)? validator;
+  final void Function(String)? onSubmitted;
 
   @override
   State<_FocusAwareInput> createState() => _FocusAwareInputState();
@@ -1037,6 +1050,7 @@ class _FocusAwareInputState extends State<_FocusAwareInput> {
           keyboardType: widget.type,
           obscureText: widget.obscure,
           style: GoogleFonts.inter(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+          onFieldSubmitted: widget.onSubmitted,
           decoration: InputDecoration(
             labelText: widget.label,
             labelStyle: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 14, fontWeight: FontWeight.w500),

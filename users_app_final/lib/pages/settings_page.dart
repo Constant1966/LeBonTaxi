@@ -3,8 +3,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/theme/app_colors.dart';
 import 'package:provider/provider.dart';
+import 'package:users_app/services/local_database_service.dart';
 import 'package:users_app/appInfo/app_info.dart';
 import 'package:users_app/authentication/login_screen_supabase.dart';
+import 'package:users_app/pages/terms_conditions_page.dart';
+import 'package:users_app/pages/privacy_policy_page.dart';
+import 'package:users_app/pages/safety_guidelines_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -93,6 +97,23 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 20),
           _buildSectionHeader("Compte", isDark),
           _buildActionTile(
+            icon: Icons.explore_outlined,
+            title: "Recommencer le guide d'accueil",
+            color: isDark ? Colors.blue.shade300 : AppColors.primary,
+            onTap: () async {
+              await LocalDatabaseService.saveAppSetting('has_completed_guide', 'false');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("🧭 Guide d'accueil réinitialisé. Retournez à l'accueil pour le recommencer."),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+            isDark: isDark,
+          ),
+          _buildActionTile(
             icon: Icons.delete_outline,
             title: "Supprimer le compte",
             color: Colors.red,
@@ -100,7 +121,29 @@ class _SettingsPageState extends State<SettingsPage> {
             isDark: isDark,
           ),
           const SizedBox(height: 20),
-          _buildSectionHeader("À propos", isDark),
+          _buildSectionHeader("À propos et Informations Légales", isDark),
+          _buildActionTile(
+            icon: Icons.description_outlined,
+            title: "Conditions Générales d'Utilisation",
+            color: isDark ? Colors.grey.shade400 : AppColors.primary,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsConditionsPage())),
+            isDark: isDark,
+          ),
+          _buildActionTile(
+            icon: Icons.privacy_tip_outlined,
+            title: "Politique de Confidentialité",
+            color: isDark ? Colors.grey.shade400 : AppColors.primary,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyPage())),
+            isDark: isDark,
+          ),
+          _buildActionTile(
+            icon: Icons.shield_outlined,
+            title: "Consignes de Sécurité",
+            color: isDark ? Colors.grey.shade400 : AppColors.primary,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyGuidelinesPage())),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 12),
           _buildInfoTile("Version", "1.0.0", isDark),
           _buildInfoTile("Développé par", "Le Bon Taxi", isDark),
         ],

@@ -102,6 +102,7 @@ class _UsersPageState extends State<UsersPage>
                     child: TextField(
                       controller: searchController,
                       style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                      textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
                         hintText: "Rechercher par nom, e-mail ou téléphone...",
                         hintStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
@@ -116,6 +117,12 @@ class _UsersPageState extends State<UsersPage>
                         setState(() {
                           searchQuery = value.toLowerCase();
                         });
+                      },
+                      onSubmitted: (value) {
+                        setState(() {
+                          searchQuery = value.toLowerCase();
+                        });
+                        FocusScope.of(context).unfocus();
                       },
                     ),
                   ),

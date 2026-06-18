@@ -319,6 +319,11 @@ class _WorkLocationPageSupabaseState extends State<WorkLocationPageSupabase> {
                   controller: _addressController,
                   focusNode: _searchFocusNode,
                   onChanged: _onSearchChanged,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (value) {
+                    _debounceTimer?.cancel();
+                    _searchPlaces(value);
+                  },
                   decoration: InputDecoration(
                     hintText: "Rechercher une adresse...",
                     hintStyle: TextStyle(color: Colors.grey.shade400),

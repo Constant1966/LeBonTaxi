@@ -2,6 +2,9 @@ import 'dart:async';
 import '../constants/app_colors.dart';
 import '../methods/common_methods.dart';
 import '../services/admin_log_service.dart';
+import '../widgets/document_review_card.dart';
+import '../dashboard/side_navigation_drawer.dart';
+import '../pages/communication_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -575,6 +578,10 @@ class _DriversDataListState extends State<DriversDataList> {
                           Icon(Icons.history, size: 18, color: Color(0xFF6366F1)),
                           SizedBox(width: 8), Text("Historique"),
                         ])),
+                        const PopupMenuItem(value: 'documents', child: Row(children: [
+                          Icon(Icons.folder_special, size: 18, color: Color(0xFF8B5CF6)),
+                          SizedBox(width: 8), Text("Voir documents"),
+                        ])),
                       ],
                       onSelected: (val) {
                         final id   = driver["id"]?.toString() ?? "";
@@ -583,8 +590,19 @@ class _DriversDataListState extends State<DriversDataList> {
                           case 'details': _showDriverDetails(driver, isDark); break;
                           case 'block':   _handleBlockAction(id, driver["block_status"] ?? "no", name); break;
                           case 'suspend': _handleSuspend(id, name); break;
-                          case 'message': _showSendMessageDialog(driver, isDark); break;
+                          case 'message':
+                            final drawerState = context.findAncestorStateOfType<SideNavigationDrawerState>();
+                            if (drawerState != null) {
+                              drawerState.setChosenScreen(
+                                CommunicationPage(
+                                  initialRecipientId: id,
+                                ),
+                                CommunicationPage.id,
+                              );
+                            }
+                            break;
                           case 'history': _showSuspensionHistory(id, name); break;
+                          case 'documents': _openDocumentsDialog(driver, isDark); break;
                         }
                       },
                     ),
@@ -660,6 +678,9 @@ class _DriversDataListState extends State<DriversDataList> {
               if (driver["car_year"] != null) _detailRow(Icons.calendar_today, "Année", driver["car_year"].toString(), isDark),
               _detailRow(Icons.verified, "Vérifié", _parseBool(driver["verified"]) ? "Oui" : "Non", isDark),
               _detailRow(Icons.block, "Statut", driver["block_status"] == "yes" ? "Bloqué" : "Actif", isDark),
+              _detailRow(Icons.folder_special, "Documents", _documentStatusLabel(driver["document_status"]?.toString()), isDark),
+              if (driver["documents_rejection_note"] != null && driver["documents_rejection_note"].toString().isNotEmpty)
+                _detailRow(Icons.info_outline, "Note rejet", driver["documents_rejection_note"].toString(), isDark),
 
               if (driver["current_latitude"] != null && driver["current_longitude"] != null) ...[
                 const SizedBox(height: 8),
@@ -687,61 +708,32 @@ class _DriversDataListState extends State<DriversDataList> {
     );
   }
 
-  // ── Dialog envoi message rapide à un chauffeur ───────────────────────────
-  void _showSendMessageDialog(Map<String, dynamic> driver, bool isDark) {
-    final titleCtrl = TextEditingController();
-    final msgCtrl = TextEditingController();
+  String _documentStatusLabel(String? status) {
+    const labels = {
+      'pending': '⏳ En attente',
+      'under_review': '🔍 En révision',
+      'approved': '✅ Approuvé',
+      'rejected': '❌ Rejeté',
+      'documents_required': '⚠️ Docs manquants',
+    };
+    return labels[status] ?? status ?? 'N/A';
+  }
+
+
+  // ── Dialog documents d'un chauffeur (accès rapide depuis la liste) ──────────
+  void _openDocumentsDialog(Map<String, dynamic> driver, bool isDark) {
+    // Import : '../widgets/document_review_card.dart'
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text("Message à ${driver['name'] ?? 'Chauffeur'}",
-          style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
-        content: SizedBox(width: 400, child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextFormField(
-            controller: titleCtrl,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: InputDecoration(labelText: "Titre", labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: msgCtrl, maxLines: 3,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: InputDecoration(labelText: "Message", labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
-          ),
-        ])),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Annuler")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), foregroundColor: Colors.white),
-            onPressed: () async {
-              if (titleCtrl.text.isEmpty || msgCtrl.text.isEmpty) return;
-              Navigator.pop(ctx);
-              try {
-                await supabase.from('admin_messages').insert({
-                  'sender_admin_email': supabase.auth.currentUser?.email ?? 'admin',
-                  'recipient_type': 'single_driver',
-                  'recipient_id': driver['id']?.toString(),
-                  'recipient_name': driver['name']?.toString(),
-                  'title': titleCtrl.text,
-                  'message': msgCtrl.text,
-                });
-                if (mounted) cMethods.showSnackBar(context, "Message envoyé");
-              } catch (e) {
-                if (mounted) cMethods.showSnackBar(context, "Erreur: $e", isError: true);
-              }
-            },
-            child: const Text("Envoyer"),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (ctx) => DocumentReviewDialog(
+        driver: driver,
+        isDark: isDark,
+        onStatusChanged: _loadDrivers,
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Point vert animé — chauffeur en ligne
 // ─────────────────────────────────────────────────────────────────────────────
 class _PulsingDot extends StatefulWidget {
   const _PulsingDot();

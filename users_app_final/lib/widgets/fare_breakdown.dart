@@ -10,6 +10,8 @@ class FareBreakdown extends StatelessWidget {
   final String trafficLabel;
   final double trafficMultiplier;
   final double discountPercentage;
+  final double referralDiscountValue;
+  final String? referralDiscountType;
 
   const FareBreakdown({
     super.key,
@@ -19,6 +21,8 @@ class FareBreakdown extends StatelessWidget {
     this.trafficLabel = 'Normal',
     this.trafficMultiplier = 1.0,
     this.discountPercentage = 0.0,
+    this.referralDiscountValue = 0.0,
+    this.referralDiscountType,
   });
 
   double get actualBaseFare => baseFare ?? globalBaseFare;
@@ -28,8 +32,18 @@ class FareBreakdown extends StatelessWidget {
   double get subtotal => actualBaseFare + distanceFare;
   double get trafficSurcharge => subtotal * (trafficMultiplier - 1.0);
   double get totalFareBeforeDiscount => subtotal + trafficSurcharge;
-  double get discountAmount => totalFareBeforeDiscount * (discountPercentage / 100.0);
-  double get totalFare => totalFareBeforeDiscount - discountAmount;
+  double get subscriptionDiscountAmount => totalFareBeforeDiscount * (discountPercentage / 100.0);
+  
+  double get referralDiscountAmount {
+    if (referralDiscountValue <= 0) return 0.0;
+    if (referralDiscountType == 'percentage') {
+      return (totalFareBeforeDiscount - subscriptionDiscountAmount) * (referralDiscountValue / 100.0);
+    } else {
+      return referralDiscountValue;
+    }
+  }
+
+  double get totalFare => totalFareBeforeDiscount - subscriptionDiscountAmount - referralDiscountAmount;
   int get totalRounded => totalFare.ceil();
   int get minimumFare => globalMinimumFare.toInt();
   int get finalFare => totalRounded < minimumFare ? minimumFare : totalRounded;
@@ -87,8 +101,20 @@ class FareBreakdown extends StatelessWidget {
             const SizedBox(height: 8),
             _buildRow(
               'Réduction Abonnement (${discountPercentage.round()}%)',
-              '-${discountAmount.round()} HTG',
+              '-${subscriptionDiscountAmount.round()} HTG',
               valueColor: AppColors.success,
+            ),
+          ],
+
+          // Referral discount
+          if (referralDiscountValue > 0) ...[
+            const SizedBox(height: 8),
+            _buildRow(
+              referralDiscountType == 'percentage'
+                  ? 'Réduction Parrainage (${referralDiscountValue.round()}%)'
+                  : 'Réduction Parrainage',
+              '-${referralDiscountAmount.round()} HTG',
+              valueColor: Colors.purple.shade600,
             ),
           ],
 

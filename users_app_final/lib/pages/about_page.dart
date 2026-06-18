@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/pages/terms_conditions_page.dart';
+import 'package:users_app/pages/privacy_policy_page.dart';
+import 'package:users_app/pages/safety_guidelines_page.dart';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -80,6 +83,8 @@ class _AboutPageState extends State<AboutPage> with SingleTickerProviderStateMix
                     const SizedBox(height: 20),
                     _buildFeatures(),
                     const SizedBox(height: 20),
+                    _buildLegalLinks(),
+                    const SizedBox(height: 20),
                     _buildContact(),
                     const SizedBox(height: 32),
                     _buildFooter(),
@@ -147,7 +152,7 @@ class _AboutPageState extends State<AboutPage> with SingleTickerProviderStateMix
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20)],
       ),
       child: Image.asset(
-        "assets/images/lebontaxi_logo.png",
+        "assets/images/lebontaxi.png",
         width: 80,
         height: 80,
         errorBuilder: (_, __, ___) => const Icon(Icons.local_taxi, size: 80, color: AppColors.primary),
@@ -282,6 +287,44 @@ class _AboutPageState extends State<AboutPage> with SingleTickerProviderStateMix
         ),
         const SizedBox(height: 20),
       ],
+    );
+  }
+
+  Widget _buildLegalLinks() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _buildCardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader(Icons.gavel, "Informations Légales", AppColors.primary),
+          const SizedBox(height: 16),
+          _buildLegalItem("Conditions Générales d'Utilisation", Icons.description_outlined, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsConditionsPage()));
+          }),
+          const Divider(),
+          _buildLegalItem("Politique de Confidentialité", Icons.privacy_tip_outlined, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()));
+          }),
+          const Divider(),
+          _buildLegalItem("Consignes de Sécurité", Icons.shield_outlined, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyGuidelinesPage()));
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegalItem(String title, IconData icon, VoidCallback onTap) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: AppColors.primary),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
+      onTap: onTap,
     );
   }
 

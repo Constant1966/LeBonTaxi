@@ -24,22 +24,17 @@ class _TripsPageState extends State<TripsPage>
   Future<void> _loadTripStats() async {
     try {
       final stats = await SupabaseService.getDriverStatistics();
-
       if (mounted) {
         setState(() {
           _totalTripsCompleted = stats['completed_trips'] as int? ?? 0;
           _todayTrips = stats['today_trips'] as int? ?? 0;
-          _weekTrips = 0;
+          _weekTrips = stats['week_trips'] as int? ?? 0;
           isLoading = false;
         });
       }
     } catch (e) {
       print("❌ Erreur chargement stats: $e");
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -67,6 +62,7 @@ class _TripsPageState extends State<TripsPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Header ────────────────────────────────────────────────
                   Text(
                     "Mes Courses",
                     style: TextStyle(
@@ -85,7 +81,7 @@ class _TripsPageState extends State<TripsPage>
                   ),
                   const SizedBox(height: 32),
 
-                  // Total Trips Card
+                  // ── Total Trips Card ──────────────────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(28),
@@ -100,7 +96,6 @@ class _TripsPageState extends State<TripsPage>
                         BoxShadow(
                           color: const Color(0xFF6366F1).withOpacity(0.3),
                           blurRadius: 20,
-                          spreadRadius: 0,
                           offset: const Offset(0, 10),
                         ),
                       ],
@@ -124,12 +119,13 @@ class _TripsPageState extends State<TripsPage>
                                 fontWeight: FontWeight.w500)),
                         const SizedBox(height: 12),
                         isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                            color: Colors.white)
                             : Text(_totalTripsCompleted.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 56,
-                                    fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 56,
+                                fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -148,150 +144,48 @@ class _TripsPageState extends State<TripsPage>
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20), // ✅ espacement réduit + uniforme
 
-                  // History Button
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
+                  // ── History Button ────────────────────────────────────────
+                  _buildNavCard(
+                    context: context,
+                    icon: Icons.history,
+                    iconColor: AppColors.primary,
+                    title: "Historique des courses",
+                    subtitle: "Voir toutes les courses terminées",
+                    theme: theme,
+                    isDark: isDark,
+                    onTap: () => Navigator.push(context,
                         MaterialPageRoute(
-                            builder: (c) => const TripsHistoryPage()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: isDark
-                                ? Colors.grey.shade800
-                                : Colors.grey.shade200),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withOpacity(isDark ? 0.2 : 0.05),
-                            blurRadius: 10,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.history,
-                                color: AppColors.primary, size: 28),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Historique des courses",
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.textTheme.bodyLarge?.color)),
-                                const SizedBox(height: 4),
-                                Text("Voir toutes les courses terminées",
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        color: theme.textTheme.bodySmall?.color)),
-                              ],
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios,
-                              color: theme.textTheme.bodySmall?.color,
-                              size: 20),
-                        ],
-                      ),
-                    ),
+                            builder: (c) => const TripsHistoryPage())),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12), // ✅ espacement réduit
 
-                  // Earnings Button
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
+                  // ── Earnings Button ───────────────────────────────────────
+                  _buildNavCard(
+                    context: context,
+                    icon: Icons.account_balance_wallet,
+                    iconColor: const Color(0xFF10B981),
+                    title: "Mes Gains",
+                    subtitle: "Suivre vos revenus et performances",
+                    theme: theme,
+                    isDark: isDark,
+                    onTap: () => Navigator.push(context,
                         MaterialPageRoute(
-                            builder: (c) => const EarningsPage()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: isDark
-                                ? Colors.grey.shade800
-                                : Colors.grey.shade200),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withOpacity(isDark ? 0.2 : 0.05),
-                            blurRadius: 10,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.account_balance_wallet,
-                                color: Color(0xFF10B981), size: 28),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Mes Gains",
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: theme.textTheme.bodyLarge?.color)),
-                                const SizedBox(height: 4),
-                                Text("Suivre vos revenus et performances",
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        color: theme.textTheme.bodySmall?.color)),
-                              ],
-                            ),
-                          ),
-                          Icon(Icons.arrow_forward_ios,
-                              color: theme.textTheme.bodySmall?.color,
-                              size: 20),
-                        ],
-                      ),
-                    ),
+                            builder: (c) => const EarningsPage())),
                   ),
 
-                  // Quick Stats Grid
+                  const SizedBox(height: 20), // ✅ espacement avant grid
+
+                  // ── Quick Stats Grid ──────────────────────────────────────
                   GridView.count(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.2,
+                    crossAxisSpacing: 12,   // ✅ réduit légèrement
+                    mainAxisSpacing: 12,    // ✅ réduit légèrement
+                    childAspectRatio: 1.3,  // ✅ cards un peu moins hautes
                     children: [
                       _buildStatCard(
                         "Aujourd'hui",
@@ -311,6 +205,8 @@ class _TripsPageState extends State<TripsPage>
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -320,10 +216,78 @@ class _TripsPageState extends State<TripsPage>
     );
   }
 
+  // ── Reusable nav card ─────────────────────────────────────────────────────
+
+  Widget _buildNavCard({
+    required BuildContext context,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required ThemeData theme,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18), // ✅ padding réduit
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 26),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color)),
+                  const SizedBox(height: 3),
+                  Text(subtitle,
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: theme.textTheme.bodySmall?.color)),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                color: theme.textTheme.bodySmall?.color, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Stat card ─────────────────────────────────────────────────────────────
+
   Widget _buildStatCard(String title, String value, IconData icon, Color color,
       ThemeData theme, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -341,12 +305,12 @@ class _TripsPageState extends State<TripsPage>
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +319,7 @@ class _TripsPageState extends State<TripsPage>
                 fit: BoxFit.scaleDown,
                 child: Text(value,
                     style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.bodyLarge?.color)),
               ),

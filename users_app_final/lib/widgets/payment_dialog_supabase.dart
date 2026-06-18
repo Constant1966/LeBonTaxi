@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/global/global_var_supabase.dart';
 
 class PaymentDialogSupabase extends StatefulWidget {
   final String fareAmount;
@@ -52,11 +53,15 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
       canPop: false,
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: _hasError
-            ? _buildError()
-            : _isWaiting
-                ? _buildWaiting()
-                : _buildSelection(),
+        backgroundColor: AppColors.getSurfaceColor(context),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: _hasError
+              ? _buildError()
+              : _isWaiting
+                  ? _buildWaiting()
+                  : _buildSelection(),
+        ),
       ),
     );
   }
@@ -125,9 +130,9 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.getBackgroundColor(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                  border: Border.all(color: AppColors.getBorderColor(context).withOpacity(0.5)),
                 ),
                 child: Column(
                   children: [
@@ -136,11 +141,12 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
                         const Icon(Icons.receipt_long,
                             color: AppColors.primary, size: 20),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           "Récapitulatif",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
+                            color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ],
@@ -172,9 +178,13 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
             ],
 
             const SizedBox(height: 24),
-            const Text(
+            Text(
               "Choisir le mode de paiement",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20, 
+                fontWeight: FontWeight.bold,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
             ),
             const SizedBox(height: 24),
             _buildOption(
@@ -231,16 +241,23 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
   Widget _buildSummaryRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: AppColors.getTextSecondaryColor(context)),
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(
+            fontSize: 14, 
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade600,
+          ),
         ),
         const Spacer(),
         Text(
           value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 14, 
+            fontWeight: FontWeight.w600,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
         ),
       ],
     );
@@ -262,15 +279,22 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             "En attente de confirmation...",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22, 
+              fontWeight: FontWeight.bold,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "Le chauffeur doit confirmer\nla réception du paiement",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 15, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 15, 
+              color: AppColors.getTextSecondaryColor(context),
+            ),
           ),
           const SizedBox(height: 16),
           // ✅ Compteur
@@ -281,7 +305,7 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
             style: TextStyle(
               fontSize: 13,
               color: remaining > 30
-                  ? Colors.grey.shade500
+                  ? AppColors.getTextSecondaryColor(context)
                   : AppColors.warning,
               fontWeight: remaining <= 30 ? FontWeight.w600 : FontWeight.normal,
             ),
@@ -333,15 +357,22 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             "Erreur de paiement",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20, 
+              fontWeight: FontWeight.bold,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             _errorMessage,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 14, 
+              color: AppColors.getTextSecondaryColor(context),
+            ),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -381,19 +412,20 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
     bool enabled,
   ) {
     final selected = _selectedMethod == value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: enabled ? () => setState(() => _selectedMethod = value) : null,
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: enabled
-              ? (selected ? color.withOpacity(0.12) : Colors.white)
-              : Colors.grey.shade100,
+              ? (selected ? color.withOpacity(0.12) : AppColors.getSurfaceColor(context))
+              : (isDark ? Colors.grey.shade900 : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: enabled
-                ? (selected ? color : Colors.grey.shade300)
-                : Colors.grey.shade300,
+                ? (selected ? color : AppColors.getBorderColor(context))
+                : AppColors.getBorderColor(context),
             width: selected ? 2.5 : 1.5,
           ),
         ),
@@ -403,12 +435,12 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: enabled ? color.withOpacity(0.15) : Colors.grey.shade200,
+                color: enabled ? color.withOpacity(0.15) : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 icon,
-                color: enabled ? color : Colors.grey.shade500,
+                color: enabled ? color : (isDark ? Colors.grey.shade600 : Colors.grey.shade500),
                 size: 30,
               ),
             ),
@@ -419,7 +451,7 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
-                  color: enabled ? Colors.black : Colors.grey.shade500,
+                  color: enabled ? AppColors.getTextPrimaryColor(context) : (isDark ? Colors.grey.shade700 : Colors.grey.shade500),
                 ),
               ),
             ),
@@ -428,15 +460,15 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
+                child: Text(
                   "Bientôt",
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: isDark ? Colors.grey.shade600 : Colors.grey,
                   ),
                 ),
               )
@@ -447,7 +479,7 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: selected ? color : Colors.grey.shade400,
+                    color: selected ? color : AppColors.getBorderColor(context),
                     width: 2,
                   ),
                   color: selected ? color : Colors.transparent,
@@ -533,6 +565,10 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
           _timeoutTimer?.cancel();
           _countdownTimer?.cancel();
 
+          if (activeReferralRewardId != null) {
+            SupabaseService.useReferralReward(activeReferralRewardId!, widget.tripID);
+          }
+
           if (mounted) {
             Navigator.pop(context, {
               'paid': true,
@@ -568,6 +604,10 @@ class _PaymentDialogSupabaseState extends State<PaymentDialogSupabase> {
         'payment_status': 'confirmed',
         'payment_confirmed_at': DateTime.now().toIso8601String(),
       }).eq('trip_id', widget.tripID);
+
+      if (activeReferralRewardId != null) {
+        await SupabaseService.useReferralReward(activeReferralRewardId!, widget.tripID);
+      }
 
       if (mounted) {
         Navigator.pop(context, {

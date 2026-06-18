@@ -104,6 +104,15 @@ class LocalDatabaseService {
       )
     ''');
 
+    // Table paramètres app (tarification, onboarding, etc.)
+    await db.execute('''
+      CREATE TABLE cached_app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        last_synced TEXT
+      )
+    ''');
+
     print('✅ Base de données SQLite créée');
   }
 
@@ -394,6 +403,35 @@ class LocalDatabaseService {
   }
 
   // ============================================================
+  // APP SETTINGS
+  // ============================================================
+
+  static Future<void> saveAppSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'cached_app_settings',
+      {
+        'key': key,
+        'value': value,
+        'last_synced': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<String?> getAppSetting(String key) async {
+    final db = await database;
+    final results = await db.query(
+      'cached_app_settings',
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (results.isEmpty) return null;
+    return results.first['value'] as String?;
+  }
+
+  // ============================================================
   // NETTOYAGE
   // ============================================================
 
@@ -403,6 +441,7 @@ class LocalDatabaseService {
     await db.delete('cached_trips');
     await db.delete('cached_earnings');
     await db.delete('pending_actions');
+    await db.delete('cached_app_settings');
     print('🗑️ Base de données locale vidée');
   }
 

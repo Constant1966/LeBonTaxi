@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:drivers_app/services/supabase_service.dart';
 import 'package:drivers_app/authentication/login_screen.dart';
+import 'package:drivers_app/authentication/driver_registration_documents_page.dart';
+import 'package:drivers_app/services/image_quality_service.dart';
 import 'package:drivers_app/theme/app_colors.dart';
 
 class DriverRegistrationScreen extends StatefulWidget {
@@ -30,13 +32,17 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
   // Vehicle type
   String _vehicleType = 'car';
 
-  // Images
+  // Images véhicule / profil
   XFile? _profilePhoto;
   XFile? _carFrontPhoto;
   XFile? _carBackPhoto;
   XFile? _carSidePhoto;
   XFile? _carInteriorPhoto; // ✅ Nouvelle photo
   XFile? _licensePhoto;
+
+  // Documents obligatoires (pages 3 & 4)
+  Map<String, File?> _documentFiles = {};
+  Map<String, ImageQualityResult?> _documentQualities = {};
 
   bool _isLoading = false;
   String? _phoneNumber;
@@ -187,6 +193,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                 _buildPage1(),
                 _buildPage2(),
                 _buildPage3(),
+                _buildPage4(),
               ],
             ),
           ),
@@ -199,7 +206,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
-        children: List.generate(3, (index) {
+        children: List.generate(4, (index) {
           final isActive = index <= _currentPage;
           return Expanded(
             child: Row(
@@ -208,12 +215,13 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                   child: Container(
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isActive ? AppColors.primary : Colors.grey.shade300,
+                      color: isActive ? AppColors.primary : Colors.grey
+                          .shade300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                if (index < 2) const SizedBox(width: 8),
+                if (index < 3) const SizedBox(width: 8),
               ],
             ),
           );
@@ -242,7 +250,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
           const SizedBox(height: 8),
           Text(
             'Ajoutez votre photo, téléphone et NIN',
-            style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.4),
+            style: TextStyle(
+                fontSize: 15, color: Colors.grey.shade600, height: 1.4),
           ),
           const SizedBox(height: 32),
 
@@ -267,9 +276,11 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                 ),
                 child: _profilePhoto != null
                     ? ClipOval(
-                  child: Image.file(File(_profilePhoto!.path), fit: BoxFit.cover),
+                  child: Image.file(
+                      File(_profilePhoto!.path), fit: BoxFit.cover),
                 )
-                    : const Icon(Icons.add_a_photo, size: 45, color: AppColors.textSecondary),
+                    : const Icon(Icons.add_a_photo, size: 45,
+                    color: AppColors.textSecondary),
               ),
             ),
           ),
@@ -288,7 +299,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             decoration: InputDecoration(
               labelText: 'Numéro de téléphone *',
               labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey.shade50,
               prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
@@ -312,7 +324,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
               hintText: '0123456789',
               helperText: '10 chiffres obligatoires',
               helperStyle: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey.shade50,
               prefixIcon: const Icon(Icons.badge, color: AppColors.primary),
@@ -338,7 +351,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                 Expanded(
                   child: Text(
                     'Le NIN (NINU) est votre numéro d\'identification nationale unique. Il est composé de 10 chiffres et est obligatoire.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.4),
+                    style: TextStyle(
+                        fontSize: 12, color: Colors.grey.shade700, height: 1.4),
                   ),
                 ),
               ],
@@ -355,7 +369,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: Colors.grey.shade300,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
                 elevation: _canContinuePage1() ? 4 : 0,
               ),
               child: const Text(
@@ -398,16 +413,21 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
         children: [
           const Text(
             'Informations du Véhicule',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
-          Text('Détails de votre véhicule', style: TextStyle(fontSize: 15, color: Colors.grey.shade600)),
+          Text('Détails de votre véhicule',
+              style: TextStyle(fontSize: 15, color: Colors.grey.shade600)),
           const SizedBox(height: 24),
 
           // ✅ SÉLECTEUR DE TYPE DE VÉHICULE
           const Text(
             'Type de véhicule *',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
 
@@ -430,11 +450,13 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
                   ? 'Marque et Modèle (ex: Yamaha R15) *'
                   : 'Modèle (ex: Toyota Corolla) *',
               labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey.shade50,
               prefixIcon: Icon(
-                _vehicleType == 'moto' ? Icons.two_wheeler : Icons.directions_car,
+                _vehicleType == 'moto' ? Icons.two_wheeler : Icons
+                    .directions_car,
                 color: AppColors.primary,
               ),
             ),
@@ -447,7 +469,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             decoration: InputDecoration(
               labelText: 'Couleur (ex: Blanc) *',
               labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey.shade50,
               prefixIcon: const Icon(Icons.palette, color: AppColors.primary),
@@ -464,11 +487,13 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             decoration: InputDecoration(
               labelText: 'Année (ex: 2020) *',
               labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey.shade50,
               counterText: '',
-              prefixIcon: const Icon(Icons.calendar_today, color: AppColors.primary),
+              prefixIcon: const Icon(
+                  Icons.calendar_today, color: AppColors.primary),
             ),
           ),
           const SizedBox(height: 16),
@@ -481,28 +506,36 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             decoration: InputDecoration(
               labelText: 'Plaque (format: AA-12345) *',
               labelStyle: const TextStyle(fontWeight: FontWeight.w500),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Colors.grey.shade50,
               counterText: '',
-              prefixIcon: const Icon(Icons.confirmation_number, color: AppColors.primary),
+              prefixIcon: const Icon(
+                  Icons.confirmation_number, color: AppColors.primary),
             ),
           ),
           const SizedBox(height: 28),
 
           // Photos du véhicule
           Text(
-            _vehicleType == 'moto' ? 'Photos de la moto *' : 'Photos du véhicule *',
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            _vehicleType == 'moto'
+                ? 'Photos de la moto *'
+                : 'Photos du véhicule *',
+            style: const TextStyle(fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary),
           ),
           const SizedBox(height: 14),
 
           // 2 photos en haut
           Row(
             children: [
-              Expanded(child: _buildPhotoCard('Avant', _carFrontPhoto, 'car_front')),
+              Expanded(
+                  child: _buildPhotoCard('Avant', _carFrontPhoto, 'car_front')),
               const SizedBox(width: 12),
-              Expanded(child: _buildPhotoCard('Arrière', _carBackPhoto, 'car_back')),
+              Expanded(
+                  child: _buildPhotoCard('Arrière', _carBackPhoto, 'car_back')),
             ],
           ),
           const SizedBox(height: 12),
@@ -510,11 +543,13 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
           // 2 photos en bas
           Row(
             children: [
-              Expanded(child: _buildPhotoCard('Côté', _carSidePhoto, 'car_side')),
+              Expanded(
+                  child: _buildPhotoCard('Côté', _carSidePhoto, 'car_side')),
               const SizedBox(width: 12),
               // ✅ Photo intérieur (seulement pour voiture/van)
               if (_vehicleType != 'moto')
-                Expanded(child: _buildPhotoCard('Intérieur', _carInteriorPhoto, 'car_interior')),
+                Expanded(child: _buildPhotoCard(
+                    'Intérieur', _carInteriorPhoto, 'car_interior')),
               if (_vehicleType == 'moto')
                 Expanded(child: Container()), // Espace vide pour moto
             ],
@@ -534,12 +569,15 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline, color: AppColors.info, size: 18),
+                  const Icon(
+                      Icons.info_outline, color: AppColors.info, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'La photo de l\'intérieur permet aux clients de voir la propreté et le confort de votre véhicule.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700, height: 1.4),
+                      style: TextStyle(fontSize: 11,
+                          color: Colors.grey.shade700,
+                          height: 1.4),
                     ),
                   ),
                 ],
@@ -553,16 +591,27 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _canContinuePage2() ? _goToPage3 : null,
+              onPressed: _canContinuePage2() ? _saveProfileAndGoToPage3 : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: Colors.grey.shade300,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
                 elevation: _canContinuePage2() ? 4 : 0,
               ),
-              child: const Text(
+              child: _isLoading
+                  ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2.5),
+              )
+                  : const Text(
                 'Continuer',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+                style: TextStyle(fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5),
               ),
             ),
           ),
@@ -579,7 +628,8 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey.shade100,
+          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey
+              .shade100,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.primary : Colors.grey.shade300,
@@ -630,82 +680,80 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
   }
 
   // ============================================================
-  // PAGE 3 : Permis
+  // PAGE 3 : Documents obligatoires
   // ============================================================
   Widget _buildPage3() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Permis de Conduire',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 8),
-          Text('Photo de votre permis de conduire', style: TextStyle(fontSize: 15, color: Colors.grey.shade600)),
-          const SizedBox(height: 32),
+    return RegistrationDocumentsPage(
+      onNext: _goToPage4,
+      initialFiles: _documentFiles,
+      onFilesChanged: (files, qualities) {
+        setState(() {
+          _documentFiles = files;
+          _documentQualities = qualities;
+        });
+      },
+    );
+  }
 
-          _buildPhotoCard('Permis de Conduire *', _licensePhoto, 'license'),
-          const SizedBox(height: 24),
+  void _goToPage4() {
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
 
-          // Info vérification
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.info.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.info.withOpacity(0.3)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  // ============================================================
+  // PAGE 4 : Récapitulatif + soumission
+  // ============================================================
+  Widget _buildPage4() {
+    final user = SupabaseService.getCurrentUser();
+    return RegistrationDocumentsSummaryPage(
+      files: _documentFiles,
+      qualities: _documentQualities,
+      driverId: user?.id ?? '',
+      onSubmitSuccess: _onRegistrationComplete,
+    );
+  }
+
+  Future<void> _onRegistrationComplete() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) =>
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)),
+            title: const Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.info_outline, color: AppColors.info, size: 22),
-                ),
-                const SizedBox(width: 14),
+                Icon(Icons.check_circle, color: AppColors.success, size: 32),
+                SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'Votre compte sera vérifié automatiquement. Vous pourrez commencer à recevoir des courses immédiatement.',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.5),
-                  ),
+                  child: Text('Inscription Réussie !',
+                      style: TextStyle(fontSize: 20)),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 32),
-
-          // Bouton Terminer
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _canSubmit() ? _submit : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                disabledBackgroundColor: Colors.grey.shade300,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: _canSubmit() ? 4 : 0,
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-              )
-                  : const Text(
-                'Terminer l\'inscription',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
-              ),
+            content: const Text(
+              'Votre dossier a été soumis avec succès. Notre équipe va vérifier vos documents dans les 24-48h. Vous recevrez une notification.',
+              style: TextStyle(fontSize: 15, height: 1.5),
             ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _goToLogin();
+                },
+                style: TextButton.styleFrom(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('OK',
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -722,7 +770,11 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             width: 2,
           ),
           boxShadow: photo != null
-              ? [BoxShadow(color: AppColors.success.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))]
+              ? [
+            BoxShadow(color: AppColors.success.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ]
               : [],
         ),
         child: photo != null
@@ -733,51 +785,49 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
             : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_photo_alternate, size: 42, color: Colors.grey.shade400),
+            Icon(Icons.add_photo_alternate, size: 42,
+                color: Colors.grey.shade400),
             const SizedBox(height: 10),
-            Text(title, style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+            Text(title, style: TextStyle(fontSize: 13,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500)),
           ],
         ),
       ),
     );
   }
 
-  bool _canSubmit() {
-    return !_isLoading && _licensePhoto != null;
-  }
-
-  Future<void> _submit() async {
+  /// Sauvegarde les infos profil + véhicule (pages 1 & 2) puis passe à la page 3.
+  Future<void> _saveProfileAndGoToPage3() async {
     if (_isLoading) return;
-
     setState(() => _isLoading = true);
 
     try {
-      print('📤 Upload des photos...');
+      print('📤 Upload photos véhicule...');
 
-      // Upload photos
       String? profilePhotoUrl;
       if (_profilePhoto != null) {
-        profilePhotoUrl = await SupabaseService.uploadPhoto(_profilePhoto!.path, 'profiles');
+        profilePhotoUrl =
+        await SupabaseService.uploadPhoto(_profilePhoto!.path, 'profiles');
       }
 
-      final carFrontUrl = await SupabaseService.uploadPhoto(_carFrontPhoto!.path, 'cars');
-      final carBackUrl = await SupabaseService.uploadPhoto(_carBackPhoto!.path, 'cars');
-      final carSideUrl = await SupabaseService.uploadPhoto(_carSidePhoto!.path, 'cars');
+      final carFrontUrl = await SupabaseService.uploadPhoto(
+          _carFrontPhoto!.path, 'cars');
+      final carBackUrl = await SupabaseService.uploadPhoto(
+          _carBackPhoto!.path, 'cars');
+      final carSideUrl = await SupabaseService.uploadPhoto(
+          _carSidePhoto!.path, 'cars');
 
       String? carInteriorUrl;
       if (_carInteriorPhoto != null) {
-        carInteriorUrl = await SupabaseService.uploadPhoto(_carInteriorPhoto!.path, 'cars');
+        carInteriorUrl =
+        await SupabaseService.uploadPhoto(_carInteriorPhoto!.path, 'cars');
       }
 
-      final licenseUrl = await SupabaseService.uploadPhoto(_licensePhoto!.path, 'licenses');
-
-      if (carFrontUrl == null || carBackUrl == null || carSideUrl == null || licenseUrl == null) {
-        throw Exception('Erreur upload photos');
+      if (carFrontUrl == null || carBackUrl == null || carSideUrl == null) {
+        throw Exception('Erreur upload photos véhicule');
       }
 
-      print('✅ Photos uploadées');
-
-      // Compléter le profil
       await SupabaseService.updateDriverProfile({
         'phone': _phoneNumber!,
         'nin': ninController.text.trim(),
@@ -790,50 +840,17 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
         'car_back_photo': carBackUrl,
         'car_side_photo': carSideUrl,
         'car_interior_photo': carInteriorUrl,
-        'license_photo': licenseUrl,
         'photo': profilePhotoUrl,
-        'profile_completed': true,
+        // profile_completed reste false jusqu'à la soumission des documents (page 4)
       });
 
-      print('✅ Profil complété');
+      print('✅ Profil de base sauvegardé');
 
-      if (!mounted) return;
-
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.check_circle, color: AppColors.success, size: 32),
-              SizedBox(width: 12),
-              Expanded(child: Text('Inscription Réussie !', style: TextStyle(fontSize: 20))),
-            ],
-          ),
-          content: const Text(
-            'Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter et commencer à recevoir des courses.',
-            style: TextStyle(fontSize: 15, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _goToLogin();
-              },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text('OK', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            ),
-          ],
-        ),
-      );
+      setState(() => _isLoading = false);
+      _goToPage3();
     } catch (e) {
-      print('❌ Erreur inscription: $e');
-
+      print('❌ Erreur sauvegarde profil: $e');
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -845,11 +862,11 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
           ),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
           margin: const EdgeInsets.all(16),
         ),
       );
-
       setState(() => _isLoading = false);
     }
   }

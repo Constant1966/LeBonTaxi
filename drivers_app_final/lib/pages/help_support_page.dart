@@ -85,7 +85,7 @@ class HelpSupportPage extends StatelessWidget {
                           "Appeler\nSupport",
                           Icons.phone,
                           const Color(0xFF10B981),
-                          () => _makePhoneCall("+509 1234-5678"),
+                          () => _makePhoneCall("+50946894905"),
                           theme,
                           isDark,
                         ),
@@ -97,7 +97,7 @@ class HelpSupportPage extends StatelessWidget {
                           "WhatsApp",
                           Icons.chat,
                           const Color(0xFF25D366),
-                          () => _openWhatsApp("+5091234567"),
+                          () => _openWhatsApp("+50946894905"),
                           theme,
                           isDark,
                         ),
@@ -109,7 +109,7 @@ class HelpSupportPage extends StatelessWidget {
                           "Email",
                           Icons.email,
                           AppColors.primary,
-                          () => _sendEmail("support@lebontaxi.ht"),
+                          () => _sendEmail("constantlorvenson@gmail.com"),
                           theme,
                           isDark,
                         ),
@@ -159,6 +159,67 @@ class HelpSupportPage extends StatelessWidget {
                   _buildFAQItem(
                     "Comment voir mon historique de courses?",
                     "Allez dans l'onglet 'Courses' > 'Historique des courses' pour voir toutes vos courses terminées.",
+                    theme,
+                    isDark,
+                  ),
+                  _buildFAQItem(
+                    "Comment fonctionne l'abonnement?",
+                    "Le Bon Taxi propose différents plans d'abonnement pour les chauffeurs. "
+                    "Accédez à la section 'Abonnement' depuis le menu principal pour voir les plans disponibles, "
+                    "leurs avantages et les tarifs. Vous pouvez payer via MonCash ou NatCash. "
+                    "Un abonnement actif est nécessaire pour recevoir des courses.",
+                    theme,
+                    isDark,
+                  ),
+                  _buildFAQItem(
+                    "Comment consulter mes gains?",
+                    "Vos gains sont visibles dans l'onglet 'Gains' du menu principal. "
+                    "Vous y trouverez :\n"
+                    "• Vos gains du jour, de la semaine et du mois\n"
+                    "• Le détail de chaque course\n"
+                    "• Un graphique de vos performances\n"
+                    "Les gains sont mis à jour en temps réel après chaque course.",
+                    theme,
+                    isDark,
+                  ),
+                  _buildFAQItem(
+                    "Comment soumettre mes documents?",
+                    "Lors de votre inscription ou depuis votre profil, vous devez soumettre :\n"
+                    "• Votre permis de conduire (recto/verso)\n"
+                    "• L'assurance de votre véhicule\n"
+                    "• La carte grise du véhicule\n\n"
+                    "Les documents sont vérifiés par notre équipe sous 24 à 48 heures. "
+                    "Vous recevrez une notification une fois vos documents approuvés.",
+                    theme,
+                    isDark,
+                  ),
+                  _buildFAQItem(
+                    "Comment changer de véhicule?",
+                    "Pour mettre à jour les informations de votre véhicule, allez dans "
+                    "Paramètres > Section Photos > Véhicule. "
+                    "Pour modifier le modèle, la couleur ou la plaque d'immatriculation, "
+                    "contactez notre support via WhatsApp ou email.",
+                    theme,
+                    isDark,
+                  ),
+                  _buildFAQItem(
+                    "Comment fonctionne le système de notes?",
+                    "Après chaque course, les passagers peuvent vous attribuer une note de 1 à 5 étoiles. "
+                    "Votre note moyenne est visible sur votre profil. "
+                    "Une note élevée augmente vos chances de recevoir des courses. "
+                    "Si votre note descend en dessous du seuil minimum, votre compte pourrait être suspendu.",
+                    theme,
+                    isDark,
+                  ),
+                  _buildFAQItem(
+                    "Que faire si l'application ne fonctionne pas?",
+                    "Essayez ces étapes :\n"
+                    "1. Vérifiez votre connexion Internet\n"
+                    "2. Activez le GPS de votre téléphone\n"
+                    "3. Fermez et relancez l'application\n"
+                    "4. Mettez à jour l'application depuis le Play Store\n"
+                    "5. Redémarrez votre téléphone\n\n"
+                    "Si le problème persiste, contactez notre support.",
                     theme,
                     isDark,
                   ),
