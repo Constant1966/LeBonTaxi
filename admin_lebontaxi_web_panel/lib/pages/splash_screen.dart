@@ -228,8 +228,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // Wait for animation to complete
-    await Future.delayed(const Duration(milliseconds: 3000));
+    // Navigate snappily since the HTML splash screen has already been shown
+    await Future.delayed(const Duration(milliseconds: 100));
 
     if (!mounted) return;
 
@@ -241,9 +241,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     } else {
       // User is not logged in, go to login page
       await _exitCtrl.forward();
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
     }
   }
 
