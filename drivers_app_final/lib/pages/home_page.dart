@@ -14,6 +14,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:drivers_app/authentication/login_screen.dart';
 
 import '../global/global_var.dart';
 import '../theme/app_colors.dart';
@@ -46,6 +47,7 @@ class _HomePageState extends State<HomePage>
   RealtimeChannel? _tripCancellationChannel;
   RealtimeChannel? _adminMessageChannel;
   RealtimeChannel? _appSettingsChannel;
+  StreamSubscription? _driverStatusSubscription;
 
   LatLng? _driverPosition;
   final List<Marker> _markers = [];
@@ -143,6 +145,7 @@ class _HomePageState extends State<HomePage>
     _adminMessageChannel = null;
     _appSettingsChannel?.unsubscribe();
     _appSettingsChannel = null;
+    _driverStatusSubscription?.cancel();
   }
 
   Future<void> _initializeDriver() async {
@@ -153,6 +156,42 @@ class _HomePageState extends State<HomePage>
     _listenForPaymentNotifications();
     _subscribeToAdminMessages();
     _subscribeToAppSettings();
+    _subscribeToDriverStatus();
+  }
+
+  void _subscribeToDriverStatus() {
+    final userId = SupabaseService.getCurrentUser()?.id;
+    if (userId == null) return;
+
+    _driverStatusSubscription?.cancel();
+    _driverStatusSubscription = SupabaseService.supabase
+        .from('drivers')
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .listen((data) {
+      if (data.isNotEmpty) {
+        final driver = data.first;
+        if (driver['block_status'] == 'yes') {
+          _logout();
+        }
+      }
+    });
+  }
+
+  Future<void> _logout() async {
+    if (isDriverCurrentlyOnline) {
+      await _goOffline();
+    }
+    
+    clearDriverData();
+    await SupabaseService.signOut();
+
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   // ============================================================

@@ -13,6 +13,7 @@ import 'package:drivers_app/pages/dashboard.dart';
 import 'package:drivers_app/pages/document_status_page.dart';
 import 'package:drivers_app/theme/app_colors.dart';
 import 'package:drivers_app/global/global_var.dart';
+import 'package:drivers_app/services/update_checker_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -141,6 +142,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _initializeApp() async {
+    // Vérifier les mises à jour en premier
+    final needsUpdate = await UpdateCheckerService.checkForUpdate(context);
+    if (needsUpdate) return; // Stop execution si mise à jour requise
+
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 

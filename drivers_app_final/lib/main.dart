@@ -10,6 +10,7 @@ import 'package:drivers_app/services/local_notification_service.dart';
 import 'package:drivers_app/services/sync_service.dart';
 import 'package:drivers_app/global/global_var.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:drivers_app/theme/app_theme.dart';
 import 'package:drivers_app/theme/theme_provider.dart';
 
@@ -24,6 +25,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    await dotenv.load(fileName: ".env");
+
     // ============================================================
     // 1. FIREBASE (Notifications FCM uniquement)
     // ============================================================
@@ -37,8 +40,8 @@ Future<void> main() async {
     // 2. SUPABASE (Backend principal - Auth + DB + Storage)
     // ============================================================
     await Supabase.initialize(
-      url: 'https://hshcsrgztdjawywrbvhv.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzaGNzcmd6dGRqYXd5d3Jidmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MzA4MjksImV4cCI6MjA4ODIwNjgyOX0.3iCQy7-i7-S8U_DcdVpUUEB703vz3n54yroK-SJMo44', // REMPLACER PAR VOTRE CLÉ ANON
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),
