@@ -25,7 +25,7 @@ dependencies:
   loading_animation_widget: ^1.2.1
 
   restart_app: ^1.2.1
-  url_launcher: ^6.2.5
+  url_launcher: ^6.3.2
   flutter_plugin_android_lifecycle: ^2.0.19
   image_picker: ^1.1.2
   googleapis: ^13.1.0
@@ -50,6 +50,10 @@ dependencies:
   # SQLite (cache local pour démarrage rapide)
   sqflite: ^2.3.2
   path: ^1.9.0
+  flutter_dotenv: ^6.0.1
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +70,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/images/final_logo.png
     - assets/images/
     - themes/

@@ -142,7 +142,7 @@ class _NotificationsPageState extends State<NotificationsPage>
     }
   }
 
-  Future<void> _sendReply(Map<String, dynamic> msg) async {
+  Future<void> _sendMessage() async {
     final text = _replyController.text.trim();
     if (text.isEmpty) return;
     _replyController.clear();
@@ -157,17 +157,22 @@ class _NotificationsPageState extends State<NotificationsPage>
         'sender_admin_email': myEmail,
         'recipient_type': 'single_user',
         'recipient_id': _userId,
-        'recipient_name': '↩ Réponse de $myName',
-        'title': 'RE: ${msg['title'] ?? ''}',
+        'recipient_name': '↩ Message de $myName',
+        'title': 'Message Support',
         'message': text,
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Réponse envoyée"),
-              backgroundColor: Colors.green),
-        );
         _loadFromSupabase();
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -261,23 +266,31 @@ class _NotificationsPageState extends State<NotificationsPage>
               color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _messages.isEmpty
-              ? _buildEmptyState(isDark)
-              : FadeTransition(
-                  opacity: _fadeAnim,
-                  child: RefreshIndicator(
-                    onRefresh: _onRefresh,
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      itemCount: _messages.length,
-                      itemBuilder: (_, i) => _buildMessageBubble(
-                          _messages[i], isDark, theme),
-                    ),
-                  ),
-                ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _messages.isEmpty
+                    ? _buildEmptyState(isDark)
+                    : FadeTransition(
+                        opacity: _fadeAnim,
+                        child: RefreshIndicator(
+                          onRefresh: _onRefresh,
+                          child: ListView.builder(
+                            reverse: true, // Messages are loaded descending, so reverse puts newest at bottom
+                            controller: _scrollController,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            itemCount: _messages.length,
+                            itemBuilder: (_, i) => _buildMessageBubble(
+                                _messages[i], isDark, theme),
+                          ),
+                        ),
+                      ),
+          ),
+          _buildInputBar(isDark, theme),
+        ],
+      ),
     );
   }
 
@@ -401,121 +414,56 @@ class _NotificationsPageState extends State<NotificationsPage>
               ),
             ),
 
-            // Reply button for direct messages
-            if (!isReply && isDirect)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: GestureDetector(
-                  onTap: () => _showReplySheet(msg),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.reply, size: 14, color: AppColors.primary),
-                      const SizedBox(width: 4),
-                      Text("Répondre",
-                          style: TextStyle(fontSize: 12,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
 
-  void _showReplySheet(Map<String, dynamic> msg) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    _replyController.clear();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _buildInputBar(bool isDark, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12).copyWith(
+          bottom: MediaQuery.of(context).padding.bottom + 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            blurRadius: 10, offset: const Offset(0, -2),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade400,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _replyController,
+              textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: "Votre message...",
+                hintStyle: TextStyle(color: Colors.grey.shade500),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
-              const SizedBox(height: 16),
-              Text("Répondre à :",
-                  style: TextStyle(fontSize: 12,
-                      color: theme.textTheme.bodySmall?.color)),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(msg['title']?.toString() ?? '',
-                    style: TextStyle(fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: theme.textTheme.bodyLarge?.color)),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _replyController,
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
-                      decoration: InputDecoration(
-                        hintText: "Votre réponse...",
-                        hintStyle: TextStyle(color: Colors.grey.shade500),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _sendReply(msg);
-                      },
-                      icon: const Icon(Icons.send_rounded,
-                          color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: _sendMessage,
+              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:users_app/services/supabase_service.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class TripDetailsPage extends StatefulWidget {
   final Map<String, dynamic> trip;
@@ -85,14 +88,117 @@ class _TripDetailsPageState extends State<TripDetailsPage> {
     );
   }
 
-  void _downloadReceipt() {
-    // TODO: Générer et télécharger le reçu PDF
+  Future<void> _downloadReceipt() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Téléchargement du reçu...'),
-        duration: Duration(seconds: 2),
+        content: Text('Génération du reçu en cours...'),
+        duration: Duration(seconds: 1),
       ),
     );
+
+    try {
+      final doc = pw.Document();
+
+      final createdAt = DateTime.parse(widget.trip['created_at']);
+      final formattedDate = DateFormat('dd/MM/yyyy HH:mm', 'fr_FR').format(createdAt);
+      
+      num fareAmount = 0;
+      if (widget.trip['fare_amount'] != null) {
+        fareAmount = num.tryParse(widget.trip['fare_amount'].toString()) ?? 0;
+      }
+      num tipAmount = 0;
+      if (widget.trip['tip'] != null) {
+        tipAmount = num.tryParse(widget.trip['tip'].toString()) ?? 0;
+      }
+
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Padding(
+              padding: const pw.EdgeInsets.all(32),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Le Bon Taxi - Reçu de course', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 20),
+                  pw.Text('Date : $formattedDate', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 10),
+                  pw.Text('ID de la course : ${widget.trip['trip_id'] ?? 'N/A'}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 20),
+                  pw.Divider(),
+                  pw.SizedBox(height: 20),
+                  pw.Text('Détails du trajet', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 10),
+                  pw.Text('Départ : ${widget.trip['pickup_address'] ?? 'Non spécifié'}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Arrivée : ${widget.trip['dropoff_address'] ?? 'Non spécifié'}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Distance : ${widget.trip['distance'] ?? 'N/A'}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Durée : ${widget.trip['duration'] ?? 'N/A'}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 20),
+                  pw.Divider(),
+                  pw.SizedBox(height: 20),
+                  pw.Text('Détails du chauffeur', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 10),
+                  pw.Text('Chauffeur : ${_driver?['name'] ?? 'N/A'}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Véhicule : ${_driver?['car_model'] ?? 'N/A'} • ${_driver?['car_number'] ?? ''}', style: const pw.TextStyle(fontSize: 14)),
+                  pw.SizedBox(height: 20),
+                  pw.Divider(),
+                  pw.SizedBox(height: 20),
+                  pw.Text('Facturation', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 10),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('Tarif de base', style: const pw.TextStyle(fontSize: 14)),
+                      pw.Text('$fareAmount HTG', style: const pw.TextStyle(fontSize: 14)),
+                    ]
+                  ),
+                  if (tipAmount > 0)
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('Pourboire', style: const pw.TextStyle(fontSize: 14)),
+                        pw.Text('$tipAmount HTG', style: const pw.TextStyle(fontSize: 14)),
+                      ]
+                    ),
+                  pw.SizedBox(height: 10),
+                  pw.Divider(),
+                  pw.SizedBox(height: 10),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('Total payé', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                      pw.Text('${fareAmount + tipAmount} HTG', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    ]
+                  ),
+                  pw.SizedBox(height: 50),
+                  pw.Center(
+                    child: pw.Text('Merci d\'avoir voyagé avec Le Bon Taxi !', style: const pw.TextStyle(fontSize: 16, color: PdfColors.grey700)),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      await Printing.sharePdf(
+        bytes: await doc.save(),
+        filename: 'recu_lebontaxi_${widget.trip['trip_id'] ?? 'course'}.pdf',
+      );
+    } catch (e) {
+      print("Erreur génération PDF: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur lors de la génération du reçu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

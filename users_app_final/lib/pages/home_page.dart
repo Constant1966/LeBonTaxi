@@ -129,6 +129,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Timer? _locationServiceTimer;
   StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
 
+  StreamSubscription? _userStatusSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -151,6 +153,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _subscribeToAppSettings();
     _listenToLocationServiceStatus();
     _checkShowGuide();
+    _subscribeToUserStatus();
+  }
+
+  void _subscribeToUserStatus() {
+    final userId = SupabaseService.supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    
+    _userStatusSubscription = SupabaseService.supabase
+        .from('users')
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .listen((data) {
+      if (data.isNotEmpty) {
+        final user = data.first;
+        if (user['block_status'] == 'yes') {
+          _logout();
+        }
+      }
+    });
   }
 
   Future<void> _checkShowGuide() async {
@@ -2102,6 +2123,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _userStatusSubscription?.cancel();
     _pulseController.dispose();
     _timeoutService?.cancel();
     _tripStatusSubscription?.cancel();

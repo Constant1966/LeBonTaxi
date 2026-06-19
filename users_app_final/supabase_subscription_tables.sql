@@ -17,7 +17,10 @@ CREATE TABLE app_settings (
   currency        TEXT NOT NULL DEFAULT 'HTG',
   -- Infos app
   app_name        TEXT NOT NULL DEFAULT 'Le Bon Taxi',
-  app_version     TEXT NOT NULL DEFAULT '1.0.0',
+  user_app_version TEXT NOT NULL DEFAULT '1.0.0',
+  user_app_url    TEXT DEFAULT '',
+  driver_app_version TEXT NOT NULL DEFAULT '1.0.0',
+  driver_app_url  TEXT DEFAULT '',
   -- Feature toggles
   subscriptions_enabled BOOLEAN NOT NULL DEFAULT true,
   moncash_enabled       BOOLEAN NOT NULL DEFAULT false,
@@ -109,7 +112,7 @@ BEGIN
   -- subscription_plan_id
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'users' AND column_name = 'subscription_plan_id'
+    WHERE table_name = 'users' AND table_schema = 'public' AND column_name = 'subscription_plan_id'
   ) THEN
     ALTER TABLE users ADD COLUMN subscription_plan_id UUID REFERENCES subscription_plans(id) ON DELETE SET NULL;
   END IF;
@@ -117,7 +120,7 @@ BEGIN
   -- subscription_end_date
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'users' AND column_name = 'subscription_end_date'
+    WHERE table_name = 'users' AND table_schema = 'public' AND column_name = 'subscription_end_date'
   ) THEN
     ALTER TABLE users ADD COLUMN subscription_end_date TIMESTAMPTZ DEFAULT NULL;
   END IF;
@@ -125,7 +128,7 @@ BEGIN
   -- subscription_start_date
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'users' AND column_name = 'subscription_start_date'
+    WHERE table_name = 'users' AND table_schema = 'public' AND column_name = 'subscription_start_date'
   ) THEN
     ALTER TABLE users ADD COLUMN subscription_start_date TIMESTAMPTZ DEFAULT NULL;
   END IF;
@@ -181,13 +184,18 @@ CREATE TRIGGER trigger_subscription_plans_updated
 -- ============================================================
 -- 7. COLONNE ROLE SUR TABLE users (pour admin)
 -- ============================================================
+-- Créer la table users si elle n'existe pas (pour éviter l'erreur 42703)
+CREATE TABLE IF NOT EXISTS public.users (
+  id UUID PRIMARY KEY
+);
+
 DO $$ 
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'users' AND column_name = 'role'
+    WHERE table_name = 'users' AND table_schema = 'public' AND column_name = 'role'
   ) THEN
-    ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
+    ALTER TABLE public.users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
   END IF;
 END $$;
 
@@ -204,8 +212,9 @@ CREATE POLICY "app_settings_read" ON app_settings
   FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "app_settings_write" ON app_settings;
-CREATE POLICY "app_settings_write" ON app_settings
-  FOR ALL USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "app_settings_write" ON app_settings FOR ALL USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- subscription_plans: lecture publique, écriture authentifiée
 ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
@@ -215,8 +224,9 @@ CREATE POLICY "subscription_plans_read" ON subscription_plans
   FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "subscription_plans_write" ON subscription_plans;
-CREATE POLICY "subscription_plans_write" ON subscription_plans
-  FOR ALL USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "subscription_plans_write" ON subscription_plans FOR ALL USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- subscription_history: lecture par l'utilisateur, écriture authentifié
 ALTER TABLE subscription_history ENABLE ROW LEVEL SECURITY;
@@ -226,8 +236,9 @@ CREATE POLICY "subscription_history_read" ON subscription_history
   FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "subscription_history_insert" ON subscription_history;
-CREATE POLICY "subscription_history_insert" ON subscription_history
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "subscription_history_insert" ON subscription_history FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ============================================================
 -- 8. VÉRIFICATION

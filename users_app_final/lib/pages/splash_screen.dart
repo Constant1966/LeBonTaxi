@@ -3,6 +3,7 @@ import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/authentication/login_screen_supabase.dart';
 import 'package:users_app/pages/home_page.dart';
 import 'package:users_app/pages/complete_profile_page.dart';
+import 'package:users_app/services/update_checker_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,6 +20,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthState() async {
+    // Vérifier les mises à jour en premier
+    final needsUpdate = await UpdateCheckerService.checkForUpdate(context);
+    if (needsUpdate) return; // Stop execution si mise à jour requise
+
     // Attendre 2 secondes pour l'animation splash
     await Future.delayed(const Duration(seconds: 2));
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:users_app/appInfo/app_info.dart';
 import 'package:users_app/config/supabase_config.dart';
 import 'package:users_app/pages/splash_screen.dart';
@@ -13,6 +14,7 @@ import 'package:users_app/theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   // ✅ INITIALISER FIREBASE (AVANT Supabase)
   await Firebase.initializeApp();
