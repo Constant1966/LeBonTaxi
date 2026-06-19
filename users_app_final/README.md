@@ -1,33 +1,42 @@
-# 📱 Le Bon Taxi - Application Client (Passager)
+# 🚕 Le Bon Taxi - Application Utilisateur
 
-L'application **Le Bon Taxi** pour passagers offre une expérience de transport fluide, sécurisée et moderne. Elle permet aux utilisateurs de commander des courses en quelques clics, de suivre leur chauffeur en temps réel et de gérer leurs trajets en toute simplicité.
+Bienvenue dans le dépôt de l'application mobile **Le Bon Taxi (Utilisateurs)**. Cette application permet aux clients de commander un taxi rapidement, de suivre l'arrivée de leur chauffeur en temps réel et de gérer leurs courses.
 
 ## ✨ Fonctionnalités Principales
 
-*   **Commande de Course Instantanée** : Détection automatique de la position GPS et saisie intuitive de la destination.
-*   **Suivi en Temps Réel** : Visualisez l'approche de votre chauffeur sur une carte interactive et suivez votre trajet en direct.
-*   **Estimation des Tarifs** : Calcul automatique et transparent du prix de la course avant même de confirmer la commande.
-*   **Abonnements Le Bon Taxi Plus** : Module intégré pour souscrire à des plans premium et bénéficier de réductions exclusives sur chaque course.
-*   **Gestion du Profil** : Historique complet des trajets, gestion des adresses favorites et informations personnelles.
-*   **Notifications Push** : Alertes en temps réel sur l'état de votre commande (Chauffeur arrivé, début de course, etc.).
-*   **Interface Moderne** : Design soigné avec support complet du mode **Clair** et **Sombre**.
+*   **Inscription et Profil** : Création de compte sécurisée via Supabase (email, informations personnelles).
+*   **Commande de Taxi** : Choix de la destination, estimation du prix et de la distance.
+*   **Suivi en Temps Réel** : Visualisation de la position du chauffeur sur la carte grâce à l'intégration Google Maps.
+*   **Historique des Courses** : Accès aux détails des trajets passés.
+*   **Notifications & Mises à Jour** : Système d'alerte pour télécharger automatiquement les dernières versions de l'application (APK).
 
-## 🛠️ Stack Technique
+## 🛠️ Technologies Utilisées
 
-*   **Framework** : [Flutter](https://flutter.dev/) (iOS & Android)
-*   **Backend** : [Supabase](https://supabase.com/) (Authentification, Base de données PostgreSQL, Temps Réel)
-*   **Cartographie** : [Google Maps SDK](https://developers.google.com/maps)
-*   **Gestion d'état** : Provider
-*   **Localisation** : Geolocator & Google Places API
+*   **Framework** : [Flutter](https://flutter.dev/) (Dart)
+*   **Backend & Base de données** : [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage, Edge Functions)
+*   **Cartographie** : Google Maps SDK & Geolocator
+*   **Gestion d'état & UI** : Composants Material Design personnalisés
 
-## 🚀 Installation et Configuration
+## 🚀 Installation & Démarrage
 
-### Prérequis
-*   Flutter SDK (dernière version stable)
-*   Un compte [Supabase](https://supabase.com/)
-*   Une clé API [Google Maps](https://console.cloud.google.com/)
+1. **Prérequis** : Assurez-vous d'avoir installé [Flutter SDK](https://docs.flutter.dev/get-started/install).
+2. **Cloner le projet** : (Assurez-vous d'avoir accès au dépôt GitHub)
+3. **Installer les dépendances** :
+   ```bash
+   flutter pub get
+   ```
+4. **Lancer l'application** :
+   ```bash
+   flutter run
+   ```
 
-### Étapes d'installation
+## 📦 Générer une version finale (APK)
 
-1.  **Cloner le dépôt** (si ce n'est pas déjà fait) :
-    
+Pour générer un fichier `.apk` prêt à être distribué aux utilisateurs (ou à ajouter dans le Panel Admin) :
+```bash
+flutter build apk --release
+```
+Le fichier généré se trouvera dans `build/app/outputs/flutter-apk/app-release.apk`.
+
+## ⚙️ Configuration Supabase
+L'application utilise Supabase. Les clés API et les identifiants de projet doivent être configurés dans le fichier `.env` ou directement à l'initialisation dans `main.dart`.
