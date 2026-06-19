@@ -1,31 +1,40 @@
-# 🚖 Écosystème Le Bon Taxi
+# 💻 Le Bon Taxi - Panel d'Administration Web
 
-Bienvenue dans le dépôt central de **Le Bon Taxi**, une solution complète de transport à la demande comprenant une plateforme d'administration web et deux applications mobiles (Client et Chauffeur).
+Bienvenue dans le dépôt du **Panel d'Administration (Web)** pour Le Bon Taxi. Ce tableau de bord permet aux administrateurs de gérer l'ensemble de la plateforme (clients, chauffeurs, courses, tarifs et paramètres globaux).
 
-## 📂 Organisation du Projet
+## ✨ Fonctionnalités Principales
 
-Cet écosystème est divisé en trois composants principaux :
+*   **Gestion des Utilisateurs** : Voir la liste des clients inscrits, bloquer/débloquer des comptes.
+*   **Gestion des Chauffeurs** : Validation des documents (permis, photos véhicule), suivi de leur statut d'abonnement.
+*   **Suivi des Courses** : Vision globale des trajets en cours, terminés ou annulés.
+*   **Tarification et Abonnements** : Modification des prix au kilomètre, définition des forfaits d'abonnement pour les chauffeurs.
+*   **Paramètres Généraux** : 
+    *   Informations de contact du support (Email, WhatsApp, Téléphone).
+    *   **Gestion des Mises à jour (APK)** : Renseignement des numéros de version actuels et liens de téléchargement pour forcer la mise à jour des applications mobiles Utilisateur et Chauffeur.
+*   **Sécurité RLS** : Accès strictement réservé aux comptes administrateurs via les Row Level Security (RLS) de Supabase.
 
-### 1. [Web Panel (Administration)](./web_panel)
-Le centre de contrôle pour les administrateurs. 
-- **Rôle** : Monitoring de la flotte, gestion des prix, validation des chauffeurs et analyses financières.
-- **Techno** : Flutter Web & Supabase.
+## 🛠️ Technologies Utilisées
 
-### 2. [User App (Client)](./user_app)
-L'application mobile destinée aux passagers.
-- **Rôle** : Commander une course, suivre le trajet et payer.
-- **Techno** : Flutter iOS/Android & Google Maps.
+*   **Framework** : [Flutter Web](https://flutter.dev/multi-platform/web)
+*   **Backend & Base de données** : [Supabase](https://supabase.com/)
+*   **Design** : Interface web réactive, avec un mode sombre/clair et un système de graphiques statistiques.
 
-### 3. [Driver App (Chauffeur)](./driver_app)
-L'outil de travail pour les chauffeurs.
-- **Rôle** : Recevoir des courses, naviguer via GPS et suivre ses revenus.
-- **Techno** : Flutter & Suivi GPS en arrière-plan.
+## 🚀 Installation & Démarrage
 
-## 🚀 Vision du Projet
-Le Bon Taxi vise à moderniser le transport urbain en offrant une expérience fluide, sécurisée et transparente pour les clients tout en optimisant les revenus des chauffeurs grâce à une gestion intelligente des données.
+1. **Prérequis** : Assurez-vous d'avoir installé [Flutter SDK](https://docs.flutter.dev/get-started/install) et activé le support web (`flutter config --enable-web`).
+2. **Installer les dépendances** :
+   ```bash
+   flutter pub get
+   ```
+3. **Lancer l'application sur Chrome** :
+   ```bash
+   flutter run -d chrome
+   ```
 
-## 🛠 Installation Rapide
-Chaque sous-dossier contient son propre fichier `README.md` avec les instructions spécifiques d'installation.
+## 📦 Déploiement
 
----
-© 2024 Le Bon Taxi. Tous droits réservés.
+Pour compiler l'application web pour la production (Hébergement Firebase, Vercel, Supabase Hosting ou serveur propre) :
+```bash
+flutter build web --release
+```
+Les fichiers statiques seront générés dans le dossier `build/web/`. Il suffit d'héberger le contenu de ce dossier sur n'importe quel serveur web.
