@@ -391,13 +391,13 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
                           children: [
                             _buildSettingField(label: "Version App Utilisateur", controller: _userAppVersionController, icon: Icons.person_rounded, hint: "Ex: 1.0.0", isNumeric: false),
                             const SizedBox(height: 10),
-                            _buildSettingField(label: "Lien APK Utilisateur", controller: _userAppUrlController, icon: Icons.link_rounded, hint: "https://...", isNumeric: false),
+                            _buildSettingField(label: "Lien APK Utilisateur", controller: _userAppUrlController, icon: Icons.link_rounded, hint: "https://...", isNumeric: false, isRequired: false),
                             const SizedBox(height: 20),
                             const Divider(),
                             const SizedBox(height: 20),
                             _buildSettingField(label: "Version App Chauffeur", controller: _driverAppVersionController, icon: Icons.drive_eta_rounded, hint: "Ex: 1.0.0", isNumeric: false),
                             const SizedBox(height: 10),
-                            _buildSettingField(label: "Lien APK Chauffeur", controller: _driverAppUrlController, icon: Icons.link_rounded, hint: "https://...", isNumeric: false),
+                            _buildSettingField(label: "Lien APK Chauffeur", controller: _driverAppUrlController, icon: Icons.link_rounded, hint: "https://...", isNumeric: false, isRequired: false),
                           ],
                         ),
                       ),
@@ -470,6 +470,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
     required IconData icon, 
     String? hint, 
     bool isNumeric = true,
+    bool isRequired = true,
   }) {
     return TextFormField(
       controller: controller,
@@ -481,8 +482,8 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
         // All styling borders are now inherited globally from theme_provider.dart
       ),
       validator: (value) {
-        if (value == null || value.trim().isEmpty) return "Ce champ est obligatoire";
-        if (isNumeric && double.tryParse(value) == null) return "Valeur invalide";
+        if (isRequired && (value == null || value.trim().isEmpty)) return "Ce champ est obligatoire";
+        if (value != null && value.trim().isNotEmpty && isNumeric && double.tryParse(value) == null) return "Valeur invalide";
         return null;
       },
     );
