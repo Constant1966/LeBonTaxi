@@ -539,7 +539,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -550,9 +550,9 @@ class _CommunicationPageState extends State<CommunicationPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Communication", style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Text("Messagerie instantanée avec les chauffeurs et clients", style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
+                          Text("Communication", style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                          const SizedBox(height: 8),
+                          Text("Messagerie instantanée avec les chauffeurs et clients.", style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
                         ],
                       ),
                       ElevatedButton.icon(
@@ -563,7 +563,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
                             _selectedConversationUser = null;
                           });
                         },
-                        icon: const Icon(Icons.campaign, size: 20),
+                        icon: const Icon(Icons.campaign_rounded, size: 20),
                         label: const Text("NOUVELLE DIFFUSION", style: TextStyle(fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -575,7 +575,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
                     ],
                   ),
                   
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   
                   // Main Body split
                   Expanded(
@@ -587,23 +587,31 @@ class _CommunicationPageState extends State<CommunicationPage> {
                           width: 350,
                           decoration: BoxDecoration(
                             color: isDark ? AppColors.darkCard : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: isDark ? AppColors.darkBorder : Colors.grey.shade200),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
                           ),
-                          child: _buildSidebar(isDark),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: _buildSidebar(isDark),
+                          )
                         ),
                         
-                        const SizedBox(width: 20),
+                        const SizedBox(width: 24),
                         
                         // Right Chat Area
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
                               color: isDark ? AppColors.darkCard : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(color: isDark ? AppColors.darkBorder : Colors.grey.shade200),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
                             ),
-                            child: _buildChatArea(isDark),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: _buildChatArea(isDark),
+                            )
                           ),
                         ),
                       ],

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -12,10 +13,11 @@ void main() async
 {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('fr_FR', null);
+  await dotenv.load(fileName: ".env");
 
   await Supabase.initialize(
-    url: 'https://hshcsrgztdjawywrbvhv.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzaGNzcmd6dGRqYXd5d3Jidmh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MzA4MjksImV4cCI6MjA4ODIwNjgyOX0.3iCQy7-i7-S8U_DcdVpUUEB703vz3n54yroK-SJMo44',
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
   runApp(

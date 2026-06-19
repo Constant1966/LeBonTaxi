@@ -9,7 +9,8 @@ class ExportService {
 
   /// Télécharger un fichier CSV dans le navigateur
   static void _downloadCsv(String csvContent, String filename) {
-    final bytes = utf8.encode(csvContent);
+    // Ajout du BOM (Byte Order Mark) UTF-8 pour la compatibilité Excel avec les accents
+    final bytes = utf8.encode('\uFEFF$csvContent');
     final blob = html.Blob([bytes], 'text/csv;charset=utf-8');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)

@@ -1,13 +1,30 @@
-// lib/services/email_service.dart  (admin_lebontaxi_web_panel)
-//
-// Adapté pour l'Edge Function Supabase avec le format :
-//   { to, subject, html }
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EmailService {
   static final _supabase = Supabase.instance.client;
+
+  /// Helper pour rÃ©cupÃ©rer les coordonnÃ©es de support
+  static Future<Map<String, String>> _fetchSupportContact() async {
+    try {
+      final res = await _supabase
+          .from('app_settings')
+          .select('support_email, support_phone, support_whatsapp')
+          .eq('id', 1)
+          .maybeSingle();
+      if (res != null) {
+        return {
+          'email': res['support_email']?.toString() ?? 'constantlorvenson@gmail.com',
+          'phone': res['support_phone']?.toString() ?? '+50946894905',
+          'whatsapp': res['support_whatsapp']?.toString() ?? 'https://wa.me/50946894905',
+        };
+      }
+    } catch (_) {}
+    return {
+      'email': 'constantlorvenson@gmail.com',
+      'phone': '+50946894905',
+      'whatsapp': 'https://wa.me/50946894905',
+    };
+  }
 
   /// Email d'approbation totale du dossier.
   static Future<void> sendApprovalEmail({
@@ -16,18 +33,22 @@ class EmailService {
     bool isVehicleChange = false,
   }) async {
     final subject = isVehicleChange
-        ? '✅ Nouveau véhicule approuvé — Le Bon Taxi'
-        : '✅ Compte activé — Le Bon Taxi';
+        ? 'âœ… Nouveau vÃ©hicule approuvÃ© â€” Le Bon Taxi'
+        : 'âœ… Compte activÃ© â€” Le Bon Taxi';
+
+    final contact = await _fetchSupportContact();
+    final supportEmail = contact['email']!;
 
     final html = _buildHtml(
-      title: isVehicleChange ? 'Nouveau véhicule approuvé !' : 'Compte activé !',
+      title: isVehicleChange ? 'Nouveau vÃ©hicule approuvÃ© !' : 'Compte activÃ© !',
       driverName: driverName,
-      iconEmoji: '🎉',
+      iconEmoji: 'ðŸŽ‰',
       headerColor: '#10B981',
       body: isVehicleChange
-          ? 'Les documents de votre <strong>nouveau véhicule</strong> ont été vérifiés et approuvés.<br><br>Votre compte est maintenant <strong>actif</strong>. Vous pouvez de nouveau recevoir des courses.'
-          : 'Félicitations ! Vos documents ont été approuvés.<br><br>Votre compte est maintenant <strong>actif</strong>. Vous pouvez commencer à recevoir des courses.',
+          ? 'Les documents de votre <strong>nouveau vÃ©hicule</strong> ont Ã©tÃ© vÃ©rifiÃ©s et approuvÃ©s.<br><br>Votre compte est maintenant <strong>actif</strong>. Vous pouvez de nouveau recevoir des courses.'
+          : 'FÃ©licitations ! Vos documents ont Ã©tÃ© approuvÃ©s.<br><br>Votre compte est maintenant <strong>actif</strong>. Vous pouvez commencer Ã  recevoir des courses.',
       callToAction: "Ouvrir l'application",
+      supportEmail: supportEmail,
     );
 
     await _send(to: driverEmail, subject: subject, html: html);
@@ -42,52 +63,62 @@ class EmailService {
     bool isVehicleChange = false,
   }) async {
     final docInfo = documentLabel != null ? ' ($documentLabel)' : '';
-    final subject = 'Document rejeté$docInfo — Le Bon Taxi';
+    final subject = 'Document rejetÃ©$docInfo â€” Le Bon Taxi';
+
+    final contact = await _fetchSupportContact();
+    final supportEmail = contact['email']!;
+    final supportPhone = contact['phone']!;
+    final supportWhatsapp = contact['whatsapp']!;
 
     final html = _buildHtml(
-      title: 'Document rejeté',
+      title: 'Document rejetÃ©',
       driverName: driverName,
-      iconEmoji: '❌',
+      iconEmoji: 'âŒ',
       headerColor: '#EF4444',
-      body: '''${isVehicleChange ? 'Un document de votre <strong>nouveau véhicule</strong>' : 'Un de vos documents'}${documentLabel != null ? ' (<strong>$documentLabel</strong>)' : ''} n\'a pas pu être validé.<br><br>
+      body: '''${isVehicleChange ? 'Un document de votre <strong>nouveau vÃ©hicule</strong>' : 'Un de vos documents'}${documentLabel != null ? ' (<strong>$documentLabel</strong>)' : ''} n\'a pas pu Ãªtre validÃ©.<br><br>
 <div style="background:#FEF2F2;border-left:4px solid #EF4444;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;">
   <strong>Motif :</strong> $rejectionReason
 </div>
-Veuillez ouvrir l\'application et <strong>re-soumettre</strong> ${documentLabel != null ? 'ce document' : 'les documents concernés'} en vous assurant que la photo est nette, lisible et que le document n\'est pas expiré.''',
+Veuillez ouvrir l\'application et <strong>re-soumettre</strong> ${documentLabel != null ? 'ce document' : 'les documents concernÃ©s'} en vous assurant que la photo est nette, lisible et que le document n\'est pas expirÃ©.''',
       callToAction: 'Re-soumettre mes documents',
-      footer: 'Questions ? <a href="mailto:constantlorvenson@gmail.com" style="color:#6366F1;">constantlorvenson@gmail.com</a> ou <a href="https://wa.me/50946894905" style="color:#25D366;">WhatsApp +509 46 89 49 05</a>',
+      footer: 'Questions ? <a href="mailto:$supportEmail" style="color:#6366F1;">$supportEmail</a> ou <a href="$supportWhatsapp" style="color:#25D366;">WhatsApp $supportPhone</a>',
+      supportEmail: supportEmail,
     );
 
     await _send(to: driverEmail, subject: subject, html: html);
   }
 
-  /// Email de confirmation de réception du changement de véhicule.
+  /// Email de confirmation de rÃ©ception du changement de vÃ©hicule.
   static Future<void> sendVehicleChangeReceivedEmail({
     required String driverEmail,
     required String driverName,
     required String newCarModel,
     required String newCarNumber,
   }) async {
-    const subject = 'Changement de véhicule reçu — Le Bon Taxi';
+    const subject = 'Changement de vÃ©hicule reÃ§u â€” Le Bon Taxi';
+
+    final contact = await _fetchSupportContact();
+    final supportEmail = contact['email']!;
 
     final html = _buildHtml(
-      title: 'Changement de véhicule reçu',
+      title: 'Changement de vÃ©hicule reÃ§u',
       driverName: driverName,
-      iconEmoji: '🔄',
+      iconEmoji: 'ðŸ”„',
       headerColor: '#6366F1',
-      body: '''Nous avons bien reçu les documents de votre nouveau véhicule :<br><br>
+      body: '''Nous avons bien reÃ§u les documents de votre nouveau vÃ©hicule :<br><br>
 <div style="background:#EEF2FF;border-left:4px solid #6366F1;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;">
-  <strong>$newCarModel</strong> — Plaque : <strong>$newCarNumber</strong>
+  <strong>$newCarModel</strong> â€” Plaque : <strong>$newCarNumber</strong>
 </div>
-Votre dossier est <strong>en cours de vérification</strong> (24 à 48h).<br><br>
-<em>Votre compte est temporairement suspendu pendant cette période.</em>''',
+Votre dossier est <strong>en cours de vÃ©rification</strong> (24 Ã  48h).<br><br>
+<em>Votre compte est temporairement suspendu pendant cette pÃ©riode.</em>''',
       callToAction: 'Voir le statut de mes documents',
+      supportEmail: supportEmail,
     );
 
     await _send(to: driverEmail, subject: subject, html: html);
   }
 
-  // ── Core send ──────────────────────────────────────────────────────────────
+  // â”€â”€ Core send â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   static Future<void> _send({
     required String to,
@@ -104,16 +135,16 @@ Votre dossier est <strong>en cours de vérification</strong> (24 à 48h).<br><br
         },
       );
       if (response.status != 200) {
-        print('[EmailService] ⚠️ Erreur: ${response.data}');
+        print('[EmailService] âš ï¸ Erreur: ${response.data}');
       } else {
-        print('[EmailService] ✅ Email envoyé à $to');
+        print('[EmailService] âœ… Email envoyÃ© Ã  $to');
       }
     } catch (e) {
-      print('[EmailService] ❌ Exception: $e');
+      print('[EmailService] âŒ Exception: $e');
     }
   }
 
-  // ── HTML template ──────────────────────────────────────────────────────────
+  // â”€â”€ HTML template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   static String _buildHtml({
     required String title,
@@ -123,8 +154,19 @@ Votre dossier est <strong>en cours de vérification</strong> (24 à 48h).<br><br
     required String body,
     String? callToAction,
     String? footer,
+    String supportEmail = 'constantlorvenson@gmail.com',
   }) {
     final year = DateTime.now().year;
+    
+    final callToActionHtml = callToAction != null ? '''
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center" style="padding:8px 0 24px;">
+              <a href="#" style="display:inline-block;background:$headerColor;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">$callToAction</a>
+            </td></tr>
+          </table>''' : '';
+          
+    final footerHtml = footer ?? 'Questions ? <a href="mailto:$supportEmail" style="color:#6366F1;">$supportEmail</a>';
+
     return '''<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -145,27 +187,22 @@ Votre dossier est <strong>en cours de vérification</strong> (24 à 48h).<br><br
 
         <!-- Brand -->
         <tr><td style="background:#1E1B4B;padding:10px 40px;text-align:center;">
-          <span style="color:#fff;font-size:16px;font-weight:700;">🚕 Le Bon Taxi</span>
+          <span style="color:#fff;font-size:16px;font-weight:700;">ðŸš• Le Bon Taxi</span>
         </td></tr>
 
         <!-- Body -->
         <tr><td style="padding:32px 40px;">
           <p style="color:#374151;font-size:16px;margin:0 0 16px;">Bonjour <strong>$driverName</strong>,</p>
           <div style="color:#4B5563;font-size:15px;line-height:1.7;margin:0 0 24px;">$body</div>
-          ${callToAction != null ? '''
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td align="center" style="padding:8px 0 24px;">
-              <a href="#" style="display:inline-block;background:$headerColor;color:#fff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">$callToAction</a>
-            </td></tr>
-          </table>''' : ''}
+$callToActionHtml
         </td></tr>
 
         <!-- Footer -->
         <tr><td style="padding:20px 40px;text-align:center;border-top:1px solid #E5E7EB;">
           <p style="color:#9CA3AF;font-size:13px;margin:0 0 6px;">
-            ${footer ?? 'Questions ? <a href="mailto:constantlorvenson@gmail.com" style="color:#6366F1;">constantlorvenson@gmail.com</a>'}
+            $footerHtml
           </p>
-          <p style="color:#9CA3AF;font-size:12px;margin:0;">© $year Le Bon Taxi — Haïti</p>
+          <p style="color:#9CA3AF;font-size:12px;margin:0;">Â© $year Le Bon Taxi â€” HaÃ¯ti</p>
         </td></tr>
 
       </table>

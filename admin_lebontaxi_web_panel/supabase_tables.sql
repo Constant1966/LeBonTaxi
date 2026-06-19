@@ -3,6 +3,25 @@
 -- Le Bon Taxi — À exécuter dans Supabase SQL Editor
 -- =============================================================
 
+-- =============================================================
+-- COLONNE ROLE SUR TABLE users (pour admin)
+-- (S'assurer que la table et la colonne existent avant les RLS)
+-- =============================================================
+CREATE TABLE IF NOT EXISTS public.users (
+  id UUID PRIMARY KEY,
+  role TEXT NOT NULL DEFAULT 'user'
+);
+
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'users' AND table_schema = 'public' AND column_name = 'role'
+  ) THEN
+    ALTER TABLE public.users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
+  END IF;
+END $$;
+
 -- ==========================================
 -- TABLE app_settings (tarification)
 -- Colonnes alignées avec les apps mobiles
@@ -20,6 +39,13 @@ CREATE TABLE IF NOT EXISTS app_settings (
   commission_percentage DOUBLE PRECISION DEFAULT 0.0,
   waiting_per_minute DOUBLE PRECISION DEFAULT 0.0,
   night_surcharge DOUBLE PRECISION DEFAULT 0.0,
+  support_email TEXT DEFAULT 'constantlorvenson@gmail.com',
+  support_phone TEXT DEFAULT '+50946894905',
+  support_whatsapp TEXT DEFAULT 'https://wa.me/50946894905',
+  user_app_version TEXT NOT NULL DEFAULT '1.0.0',
+  user_app_url    TEXT DEFAULT '',
+  driver_app_version TEXT NOT NULL DEFAULT '1.0.0',
+  driver_app_url  TEXT DEFAULT '',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -29,9 +55,16 @@ VALUES (1, 50.0, 150.0, 100.0)
 ON CONFLICT (id) DO NOTHING;
 
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can read settings" ON app_settings;
+DROP POLICY IF EXISTS "Admins can update settings" ON app_settings;
+DROP POLICY IF EXISTS "Admins can insert settings" ON app_settings;
 CREATE POLICY "Anyone can read settings" ON app_settings FOR SELECT USING (true);
-CREATE POLICY "Admins can update settings" ON app_settings FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert settings" ON app_settings FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can update settings" ON app_settings FOR UPDATE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert settings" ON app_settings FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
 -- TABLE admin_logs (audit admin)
@@ -47,8 +80,14 @@ CREATE TABLE IF NOT EXISTS admin_logs (
 );
 
 ALTER TABLE admin_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can read all logs" ON admin_logs FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert logs" ON admin_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can read all logs" ON admin_logs;
+DROP POLICY IF EXISTS "Admins can insert logs" ON admin_logs;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can read all logs" ON admin_logs FOR SELECT USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert logs" ON admin_logs FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
 -- TABLE discounts (rabais/promotions)
@@ -71,10 +110,22 @@ CREATE TABLE IF NOT EXISTS discounts (
 );
 
 ALTER TABLE discounts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can manage discounts" ON discounts USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert discounts" ON discounts FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Admins can update discounts" ON discounts FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can delete discounts" ON discounts FOR DELETE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage discounts" ON discounts;
+DROP POLICY IF EXISTS "Admins can insert discounts" ON discounts;
+DROP POLICY IF EXISTS "Admins can update discounts" ON discounts;
+DROP POLICY IF EXISTS "Admins can delete discounts" ON discounts;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can manage discounts" ON discounts USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert discounts" ON discounts FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can update discounts" ON discounts FOR UPDATE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can delete discounts" ON discounts FOR DELETE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
 -- TABLE admin_messages (messagerie admin + annonces)
@@ -94,8 +145,14 @@ CREATE TABLE IF NOT EXISTS admin_messages (
 );
 
 ALTER TABLE admin_messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can manage messages" ON admin_messages USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert messages" ON admin_messages FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage messages" ON admin_messages;
+DROP POLICY IF EXISTS "Admins can insert messages" ON admin_messages;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can manage messages" ON admin_messages USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert messages" ON admin_messages FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
 -- TABLE admin_conversations (messagerie bidirectionnelle)
@@ -125,14 +182,32 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
 );
 
 ALTER TABLE admin_conversations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can manage conversations" ON admin_conversations USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert conversations" ON admin_conversations FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Admins can update conversations" ON admin_conversations FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage conversations" ON admin_conversations;
+DROP POLICY IF EXISTS "Admins can insert conversations" ON admin_conversations;
+DROP POLICY IF EXISTS "Admins can update conversations" ON admin_conversations;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can manage conversations" ON admin_conversations USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert conversations" ON admin_conversations FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can update conversations" ON admin_conversations FOR UPDATE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 ALTER TABLE conversation_messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can manage conv_messages" ON conversation_messages USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert conv_messages" ON conversation_messages FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Admins can update conv_messages" ON conversation_messages FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage conv_messages" ON conversation_messages;
+DROP POLICY IF EXISTS "Admins can insert conv_messages" ON conversation_messages;
+DROP POLICY IF EXISTS "Admins can update conv_messages" ON conversation_messages;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can manage conv_messages" ON conversation_messages USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert conv_messages" ON conversation_messages FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can update conv_messages" ON conversation_messages FOR UPDATE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
 -- TABLE suspensions (blocages temporaires)
@@ -152,9 +227,18 @@ CREATE TABLE IF NOT EXISTS suspensions (
 );
 
 ALTER TABLE suspensions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can manage suspensions" ON suspensions USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert suspensions" ON suspensions FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Admins can update suspensions" ON suspensions FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage suspensions" ON suspensions;
+DROP POLICY IF EXISTS "Admins can insert suspensions" ON suspensions;
+DROP POLICY IF EXISTS "Admins can update suspensions" ON suspensions;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can manage suspensions" ON suspensions USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert suspensions" ON suspensions FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can update suspensions" ON suspensions FOR UPDATE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
 -- TABLE reviews (avis clients)
@@ -177,20 +261,39 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can manage reviews" ON reviews USING (auth.role() = 'authenticated');
-CREATE POLICY "Admins can insert reviews" ON reviews FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Admins can update reviews" ON reviews FOR UPDATE USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Admins can manage reviews" ON reviews;
+DROP POLICY IF EXISTS "Admins can insert reviews" ON reviews;
+DROP POLICY IF EXISTS "Admins can update reviews" ON reviews;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can manage reviews" ON reviews USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can insert reviews" ON reviews FOR INSERT WITH CHECK ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
+DO $$ BEGIN
+  EXECUTE 'CREATE POLICY "Admins can update reviews" ON reviews FOR UPDATE USING ((SELECT role FROM public.users WHERE id = auth.uid()) = ''admin'')';
+END $$;
 
 -- ==========================================
--- ACTIVER LE REALTIME
+-- ACTIVER LE REALTIME (Idempotent)
 -- ==========================================
-ALTER PUBLICATION supabase_realtime ADD TABLE admin_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE discounts;
-ALTER PUBLICATION supabase_realtime ADD TABLE suspensions;
-ALTER PUBLICATION supabase_realtime ADD TABLE reviews;
-ALTER PUBLICATION supabase_realtime ADD TABLE admin_conversations;
-ALTER PUBLICATION supabase_realtime ADD TABLE conversation_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE app_settings;
+DO $$
+DECLARE
+    t text;
+BEGIN
+    FOR t IN 
+        SELECT unnest(ARRAY['admin_messages', 'discounts', 'suspensions', 'reviews', 'admin_conversations', 'conversation_messages', 'app_settings'])
+    LOOP
+        IF NOT EXISTS (
+            SELECT 1
+            FROM pg_publication_tables
+            WHERE pubname = 'supabase_realtime' AND tablename = t
+        ) THEN
+            EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE %I;', t);
+        END IF;
+    END LOOP;
+END;
+$$;
 
 -- ==========================================
 -- MIGRATION : Changement de véhicule
@@ -239,4 +342,9 @@ ALTER TABLE drivers ADD COLUMN IF NOT EXISTS previous_vehicle_info JSONB;
 --
 -- Table `earnings` :
 --   id, driver_id, trip_id, amount, created_at
+
+-- ALTER TABLE statements for existing databases:
+-- ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS support_email TEXT DEFAULT 'constantlorvenson@gmail.com';
+-- ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS support_phone TEXT DEFAULT '+50946894905';
+-- ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS support_whatsapp TEXT DEFAULT 'https://wa.me/50946894905';
 

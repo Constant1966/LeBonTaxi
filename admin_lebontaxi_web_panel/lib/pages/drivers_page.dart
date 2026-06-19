@@ -35,7 +35,7 @@ class _DriversPageState extends State<DriversPage>
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : Colors.grey.shade50,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -47,71 +47,72 @@ class _DriversPageState extends State<DriversPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Gérer les chauffeurs",
+                      "Gérer les Chauffeurs",
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
-                      "Afficher et gérer tous les chauffeurs enregistrés",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      "Consultez, recherchez et gérez les comptes des chauffeurs.",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                       ),
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        try {
-                          await ExportService.exportDrivers();
-                          if (context.mounted) cMethods.showSnackBar(context, "✅ Export CSV téléchargé !");
-                        } catch (e) {
-                          if (context.mounted) cMethods.showSnackBar(context, "❌ Erreur: $e");
-                        }
-                      },
-                      icon: const Icon(Icons.download, size: 18),
-                      label: const Text("Exporter"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-                        foregroundColor: const Color(0xFF6366F1),
-                        elevation: 0,
-                        side: BorderSide(color: isDark ? AppColors.darkBorder : Colors.grey.shade300),
-                      ),
-                    ),
-                  ],
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      await ExportService.exportDrivers();
+                      if (context.mounted) cMethods.showSnackBar(context, "✅ Export CSV téléchargé !");
+                    } catch (e) {
+                      if (context.mounted) cMethods.showSnackBar(context, "❌ Erreur: $e");
+                    }
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 20),
+                  label: const Text("Exporter CSV", style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981), // Emerald green for CSV
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shadowColor: const Color(0xFF10B981).withOpacity(0.4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Barre de recherche
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkCard : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: isDark ? AppColors.darkBorder : Colors.grey.shade200),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: Row(
                 children: [
+                  const Icon(Icons.search_rounded, color: AppColors.primary),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: searchController,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
-                        hintText: "Rechercher par nom, téléphone ou détails de la voiture...",
-                        hintStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
+                        hintText: "Rechercher un chauffeur par nom, téléphone ou véhicule...",
+                        hintStyle: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade400, fontSize: 15),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         filled: false,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -128,7 +129,7 @@ class _DriversPageState extends State<DriversPage>
                   ),
                   if (searchQuery.isNotEmpty)
                     IconButton(
-                      icon: const Icon(Icons.clear, color: Color(0xFF6B7280)),
+                      icon: const Icon(Icons.clear_rounded, color: Colors.grey),
                       onPressed: () {
                         searchController.clear();
                         setState(() {
@@ -140,50 +141,11 @@ class _DriversPageState extends State<DriversPage>
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            // Tableau de données
+            // Grille de données
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isDark ? AppColors.darkBorder : Colors.grey.shade200),
-                ),
-                child: Column(
-                  children: [
-                    // En-tête du tableau
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCard : const Color(0xFF6366F1).withOpacity(0.05),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          cMethods.header(1, "PHOTO", isDark: isDark),
-                          cMethods.header(2, "CHAUFFEUR", isDark: isDark),
-                          cMethods.header(2, "VÉHICULE", isDark: isDark),
-                          cMethods.header(1, "NOTE", isDark: isDark),
-                          cMethods.header(1, "EN LIGNE", isDark: isDark),
-                          cMethods.header(1, "DOCUMENTS", isDark: isDark),
-                          cMethods.header(1, "STATUT", isDark: isDark),
-                          cMethods.header(1, "ACTION", isDark: isDark),
-                        ],
-                      ),
-                    ),
-
-                    // Données du tableau
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: DriversDataList(searchQuery: searchQuery),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: DriversDataList(searchQuery: searchQuery),
             ),
           ],
         ),

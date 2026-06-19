@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ThemeProvider extends ChangeNotifier {
   static const String _themeKey = 'isDarkMode';
@@ -29,7 +30,7 @@ class ThemeProvider extends ChangeNotifier {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: 'Inter',
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF6366F1),
         brightness: Brightness.light,
@@ -37,45 +38,51 @@ class ThemeProvider extends ChangeNotifier {
       scaffoldBackgroundColor: const Color(0xFFF8F9FB),
       cardColor: Colors.white,
       dividerColor: const Color(0xFFE5E7EB),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.white,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.inter(
           fontWeight: FontWeight.bold,
-          color: Color(0xFF1F2937),
+          color: const Color(0xFF1F2937),
           fontSize: 18,
         ),
-        iconTheme: IconThemeData(color: Color(0xFF6B7280)),
+        iconTheme: const IconThemeData(color: Color(0xFF6B7280)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.grey.shade50,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade200),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }
@@ -85,7 +92,7 @@ class ThemeProvider extends ChangeNotifier {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: 'Inter',
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF6366F1),
         brightness: Brightness.dark,
@@ -95,47 +102,53 @@ class ThemeProvider extends ChangeNotifier {
       cardColor: const Color(0xFF111C32),
       dividerColor: const Color(0xFF1E3254),
       canvasColor: const Color(0xFF111C32),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF111C32),
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF111C32),
         elevation: 0,
-        surfaceTintColor: Color(0xFF111C32),
-        titleTextStyle: TextStyle(
+        surfaceTintColor: const Color(0xFF111C32),
+        titleTextStyle: GoogleFonts.inter(
           fontWeight: FontWeight.bold,
-          color: Color(0xFFE2E8F0),
+          color: const Color(0xFFE2E8F0),
           fontSize: 18,
         ),
-        iconTheme: IconThemeData(color: Color(0xFF94A3B8)),
+        iconTheme: const IconThemeData(color: Color(0xFF94A3B8)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF162240),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF1E3254)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
         ),
         labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
         hintStyle: const TextStyle(color: Color(0xFF64748B)),
       ),
       dialogTheme: const DialogThemeData(
         backgroundColor: Color(0xFF111C32),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
       ),
       popupMenuTheme: const PopupMenuThemeData(
         color: Color(0xFF111C32),

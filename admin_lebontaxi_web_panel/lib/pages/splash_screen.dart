@@ -78,99 +78,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   void _initAnimations() {
-    // Background gradient animation (continuous)
-    _bgCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
-
-    // Particle animation (continuous)
-    _particleCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 12),
-    )..repeat();
-
-    // Logo entrance
-    _logoCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _logoScale = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _logoCtrl, curve: Curves.elasticOut),
-    );
-    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _logoCtrl, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
-    );
-
-    // Halo pulse (continuous after logo appears)
-    _haloCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    );
-    _haloScale = Tween<double>(begin: 0.85, end: 1.15).animate(
-      CurvedAnimation(parent: _haloCtrl, curve: Curves.easeInOut),
-    );
-    _haloPulse = Tween<double>(begin: 0.15, end: 0.4).animate(
-      CurvedAnimation(parent: _haloCtrl, curve: Curves.easeInOut),
-    );
-
-    // Text entrance
-    _textCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _titleSlide = Tween<double>(begin: 30.0, end: 0.0).animate(
-      CurvedAnimation(parent: _textCtrl, curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic)),
-    );
-    _titleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _textCtrl, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
-    );
-    _subtitleSlide = Tween<double>(begin: 20.0, end: 0.0).animate(
-      CurvedAnimation(parent: _textCtrl, curve: const Interval(0.3, 0.8, curve: Curves.easeOutCubic)),
-    );
-    _subtitleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _textCtrl, curve: const Interval(0.3, 0.7, curve: Curves.easeOut)),
-    );
-
-    // Progress bar
-    _progressCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    );
-    _progressFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _progressCtrl, curve: const Interval(0.0, 0.3, curve: Curves.easeOut)),
-    );
-
-    // Exit animation
-    _exitCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _exitFade = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _exitCtrl, curve: Curves.easeInCubic),
-    );
+    // Animations removed for faster load
   }
 
   Future<void> _startAnimationSequence() async {
-    // Step 1: Logo entrance
-    await Future.delayed(const Duration(milliseconds: 200));
-    if (!mounted) return;
-    _logoCtrl.forward();
-
-    // Step 2: Halo pulse starts
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    _haloCtrl.repeat(reverse: true);
-
-    // Step 3: Text slides in
-    await Future.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-    _textCtrl.forward();
-
-    // Step 4: Progress bar appears
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-    _progressCtrl.forward();
+    // Animations removed
   }
 
   // ─── AUTH LOGIC (Preserved exactly as original) ────────────
@@ -184,7 +96,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       
       if (adminCheck.isNotEmpty) {
         if (mounted) {
-          await _exitCtrl.forward();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const SideNavigationDrawer()),
           );
@@ -211,7 +122,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Accès refusé. Vous n'êtes pas administrateur."), backgroundColor: Colors.red),
         );
-        await _exitCtrl.forward();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
@@ -219,7 +129,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     } catch (e) {
       await Supabase.instance.client.auth.signOut();
       if (mounted) {
-        await _exitCtrl.forward();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
@@ -228,9 +137,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // Navigate snappily since the HTML splash screen has already been shown
-    await Future.delayed(const Duration(milliseconds: 100));
-
     if (!mounted) return;
 
     // Check if user is already logged in
@@ -240,7 +146,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       await _navigateAfterAuth(user);
     } else {
       // User is not logged in, go to login page
-      await _exitCtrl.forward();
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -268,56 +173,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Widget build(BuildContext context) {
     final sz = MediaQuery.of(context).size;
 
-    return Scaffold(
-      body: FadeTransition(
-        opacity: _exitFade,
-        child: Stack(
-          children: [
-            // Animated gradient background
-            _buildAnimatedBackground(sz),
-
-            // Floating particles
-            _buildParticles(sz),
-
-            // Grid pattern overlay
-            _buildGridOverlay(sz),
-
-            // Main content
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Spacer(flex: 3),
-
-                  // Logo with halo
-                  _buildLogoWithHalo(),
-
-                  const SizedBox(height: 48),
-
-                  // Title
-                  _buildTitle(),
-
-                  const SizedBox(height: 12),
-
-                  // Subtitle
-                  _buildSubtitle(),
-
-                  const Spacer(flex: 2),
-
-                  // Progress bar
-                  _buildProgressBar(sz),
-
-                  const SizedBox(height: 16),
-
-                  // Loading text
-                  _buildLoadingText(),
-
-                  const SizedBox(height: 48),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return const Scaffold(
+      backgroundColor: Color(0xFF060B18),
+      body: Center(
+        child: CircularProgressIndicator(color: Color(0xFFFBBF24)),
       ),
     );
   }

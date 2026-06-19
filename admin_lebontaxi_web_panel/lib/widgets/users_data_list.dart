@@ -175,7 +175,7 @@ class _UsersDataListState extends State<UsersDataList> {
                   Expanded(child: Text(user["name"]?.toString() ?? "N/A", style: TextStyle(fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black87))),
                 ]), isDark: isDark),
                 cMethods.data(1, Text(user["email"]?.toString() ?? "N/A", style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87), overflow: TextOverflow.ellipsis), isDark: isDark),
-                cMethods.data(1, Text(user["phone"]?.toString() ?? "N/A", style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87)), isDark: isDark),
+                cMethods.data(1, Text(user["phone"]?.toString().replaceAll('++', '+') ?? "N/A", style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87)), isDark: isDark),
                 cMethods.data(1, cMethods.buildStatusBadge(user["block_status"] ?? "no", isDark: isDark), isDark: isDark),
                 cMethods.data(1, PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert, color: Color(0xFF6B7280)),

@@ -87,26 +87,55 @@ class CommonMethods
     ) ?? false;
   }
 
-  // Affiche un message de succès ou d'erreur
+  // Affiche un message de succès ou d'erreur (Design professionnel façon Top Toast)
   void showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Fermer le snackbar actuel pour éviter l'empilement
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(
-              isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isError ? Colors.red.withValues(alpha: 0.15) : Colors.green.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+                color: isError ? (isDark ? Colors.redAccent : Colors.red) : (isDark ? Colors.greenAccent : Colors.green),
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
           ],
         ),
-        backgroundColor: isError ? Colors.red.shade600 : Colors.green.shade600,
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+        margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 120, // Pousse le toast vers le haut
+            left: MediaQuery.of(context).size.width > 600 ? MediaQuery.of(context).size.width / 2 - 200 : 20,
+            right: MediaQuery.of(context).size.width > 600 ? MediaQuery.of(context).size.width / 2 - 200 : 20,
         ),
-        duration: const Duration(seconds: 3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade200),
+        ),
+        elevation: 8,
+        duration: const Duration(seconds: 4),
       ),
     );
   }

@@ -421,142 +421,149 @@ class _DriversDataListState extends State<DriversDataList> {
         ])));
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 350,
+        mainAxisExtent: 230,
+        mainAxisSpacing: 24,
+        crossAxisSpacing: 24,
+      ),
       itemCount: itemsList.length,
       itemBuilder: (context, index) {
         final driver    = itemsList[index];
         final isBlocked = driver["block_status"] == "yes";
         final isOnline  = _isDriverOnline(driver);
 
-            return InkWell(
-              onTap: () => _showDriverDetails(driver, isDark),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(
-                      color: isDark ? AppColors.darkCard : Colors.grey.shade100))),
-                child: Row(children: [
-
-                  // Photo
-                  cMethods.data(1,
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            driver["photo"]?.toString() ?? "",
-                            width: 50, height: 50, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 50, height: 50,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(Icons.person, color: Color(0xFF6366F1)),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0, bottom: 0,
-                          child: Container(
-                            width: 14, height: 14,
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isDark ? AppColors.darkBorder : Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Photo & Basic Info
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          driver["photo"]?.toString() ?? "",
+                          width: 56, height: 56, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 56, height: 56,
                             decoration: BoxDecoration(
-                              color: isOnline ? const Color(0xFF10B981) : Colors.grey,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: isDark ? AppColors.darkCard : Colors.white, width: 2),
+                              color: const Color(0xFF6366F1).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            child: const Icon(Icons.person, color: Color(0xFF6366F1), size: 30),
                           ),
                         ),
+                      ),
+                      Container(
+                        width: 14, height: 14,
+                        decoration: BoxDecoration(
+                          color: isOnline ? const Color(0xFF10B981) : Colors.grey,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isDark ? AppColors.darkCard : Colors.white, width: 2),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          driver["name"]?.toString() ?? "N/A",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : Colors.black87),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(children: [
+                          Icon(Icons.phone, size: 12, color: isDark ? Colors.white54 : Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            driver["phone"]?.toString() ?? "N/A",
+                            style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.black54),
+                          ),
+                        ]),
+                        const SizedBox(height: 6),
+                        DriverRatingWidget(driverId: driver["id"]?.toString() ?? "", isDark: isDark),
                       ],
                     ),
-                    isDark: isDark,
                   ),
-
-                  // Nom + Téléphone
-                  cMethods.data(2,
-                    Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(driver["name"]?.toString() ?? "N/A",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14,
-                              color: isDark ? Colors.white : Colors.black87)),
-                      const SizedBox(height: 4),
-                      Row(children: [
-                        Icon(Icons.phone, size: 12, color: isDark ? Colors.white38 : Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(driver["phone"]?.toString() ?? "N/A",
-                            style: TextStyle(fontSize: 12,
-                                color: isDark ? Colors.white70 : Colors.black54)),
-                      ]),
-                    ]),
-                    isDark: isDark,
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              Divider(color: isDark ? AppColors.darkBorder : Colors.grey.shade100, height: 1),
+              const SizedBox(height: 12),
+              
+              // 2. Vehicle Details
+              Row(
+                children: [
+                  const Icon(Icons.directions_car_rounded, size: 16, color: Color(0xFF6366F1)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "${driver['car_model'] ?? ''} ${driver['car_color'] ?? ''}".trim(),
+                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: isDark ? Colors.white : Colors.black87),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-
-                  // Véhicule + Plaque
-                  cMethods.data(2,
-                    Column(crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(driver["car_model"]?.toString() ?? "N/A",
-                          style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13,
-                              color: isDark ? Colors.white : Colors.black87)),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(driver["car_number"]?.toString() ?? "N/A",
-                            style: TextStyle(fontSize: 11, fontFamily: 'monospace',
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white70 : Colors.black87)),
-                      ),
-                    ]),
-                    isDark: isDark,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      driver["car_number"]?.toString() ?? "N/A",
+                      style: TextStyle(fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black87),
+                    ),
                   ),
-
-                  // Note
-                  cMethods.data(1,
-                    DriverRatingWidget(
-                        driverId: driver["id"]?.toString() ?? "", isDark: isDark),
-                    isDark: isDark,
-                  ),
-
-                  // EN LIGNE
-                  cMethods.data(1,
-                    Row(children: [
-                      isOnline ? const _PulsingDot() : Container(
-                        width: 8, height: 8,
-                        decoration: const BoxDecoration(
-                            shape: BoxShape.circle, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isOnline ? "En ligne" : "Hors ligne",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isOnline ? FontWeight.bold : FontWeight.normal,
-                          color: isOnline ? const Color(0xFF10B981) : Colors.grey,
-                        ),
-                      ),
-                    ]),
-                    isDark: isDark,
-                  ),
-
-                  // Statut bloqué/actif
-                  cMethods.data(1,
-                    cMethods.buildStatusBadge(driver["block_status"] ?? "no", isDark: isDark),
-                    isDark: isDark,
-                  ),
-
-                  // Actions
-                  cMethods.data(1,
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, color: Color(0xFF6B7280)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ],
+              ),
+              
+              const Spacer(),
+              
+              // 3. Status & Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  cMethods.buildStatusBadge(driver["block_status"] ?? "no", isDark: isDark),
+                  
+                  // Action Menu
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: PopupMenuButton<String>(
+                      icon: Icon(Icons.more_horiz_rounded, color: isDark ? Colors.white70 : Colors.black87),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      position: PopupMenuPosition.under,
                       itemBuilder: (ctx) => [
                         PopupMenuItem(value: 'details', child: Row(children: [
-                          Icon(Icons.info_outline, size: 18, color: const Color(0xFF6366F1)),
+                          const Icon(Icons.info_outline, size: 18, color: Color(0xFF6366F1)),
                           const SizedBox(width: 8),
                           const Text("Voir détails"),
                         ])),
@@ -606,13 +613,14 @@ class _DriversDataListState extends State<DriversDataList> {
                         }
                       },
                     ),
-                    isDark: isDark,
                   ),
-                ]),
+                ],
               ),
-            );
-          },
+            ],
+          ),
         );
+      },
+    );
   }
 
   // ── Dialog détails complets du chauffeur ──────────────────────────────────
