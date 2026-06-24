@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:users_app/services/geocoding_service.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 
 class FavoriteLocationsPageSupabase extends StatefulWidget {
   const FavoriteLocationsPageSupabase({super.key});
@@ -117,17 +118,13 @@ class _FavoriteLocationsPageSupabaseState extends State<FavoriteLocationsPageSup
         longitude: lng,
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Lieu ajouté aux favoris!"), backgroundColor: AppColors.success),
-      );
+      SnackBarHelper.showSuccess(context, "Lieu ajouté aux favoris !");
 
       _loadFavorites();
     } catch (e) {
       print("❌ Erreur ajout favori: $e");
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erreur lors de l'ajout"), backgroundColor: AppColors.error),
-      );
+      SnackBarHelper.showError(context, "Erreur lors de l'ajout");
     }
   }
 
@@ -152,22 +149,12 @@ class _FavoriteLocationsPageSupabaseState extends State<FavoriteLocationsPageSup
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✅ Favori supprimé"),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, "Favori supprimé avec succès");
       }
     } catch (e) {
       print("❌ Erreur suppression favori: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur: ${e.toString()}"),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        SnackBarHelper.showError(context, "Erreur: ${e.toString()}");
       }
     }
   }

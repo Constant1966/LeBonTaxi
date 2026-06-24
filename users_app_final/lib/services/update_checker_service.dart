@@ -54,24 +54,41 @@ class UpdateCheckerService {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.system_update_rounded, color: Colors.blue, size: 28),
-            const SizedBox(width: 10),
-            const Text('Mise à jour disponible'),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.system_update_rounded, color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Flexible(
+              child: Text('Mise \u00e0 jour disponible', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
         content: const Text(
-          'Une nouvelle version de l\'application Le Bon Taxi est disponible. Veuillez télécharger la mise à jour pour continuer à l\'utiliser.',
-          style: TextStyle(fontSize: 15),
+          'Une nouvelle version de l\'application Le Bon Taxi est disponible. Veuillez t\u00e9l\u00e9charger la mise \u00e0 jour pour continuer \u00e0 l\'utiliser.',
+          style: TextStyle(fontSize: 15, height: 1.5),
         ),
         actions: [
-          ElevatedButton(
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Plus tard', style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.download_rounded, size: 18),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: const Color(0xFF6366F1),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
               if (downloadUrl.isNotEmpty) {
@@ -81,7 +98,7 @@ class UpdateCheckerService {
                 }
               }
             },
-            child: const Text('Mettre à jour maintenant'),
+            label: const Text('Mettre \u00e0 jour', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

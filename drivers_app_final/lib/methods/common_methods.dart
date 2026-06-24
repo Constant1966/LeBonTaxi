@@ -4,6 +4,7 @@ import 'package:drivers_app/global/global_var.dart';
 import 'package:drivers_app/services/osrm_routing_service.dart';
 import 'package:drivers_app/services/supabase_service.dart';
 import 'package:drivers_app/services/app_settings_service.dart';
+import 'package:drivers_app/widgets/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
@@ -27,10 +28,14 @@ class CommonMethods {
     }
   }
 
-  /// Affiche un SnackBar avec un message
-  void displaySnackBar(String messageText, BuildContext context) {
-    var snackBar = SnackBar(content: Text(messageText));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  /// Affiche un SnackBar élégant — délègue au SnackBarHelper
+  void displaySnackBar(String messageText, BuildContext context, {bool isError = false}) {
+    if (!context.mounted) return;
+    if (isError) {
+      SnackBarHelper.showError(context, messageText);
+    } else {
+      SnackBarHelper.showInfo(context, messageText);
+    }
   }
 
   // ============================================================

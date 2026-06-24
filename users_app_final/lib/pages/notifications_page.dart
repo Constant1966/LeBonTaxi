@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:users_app/theme/app_colors.dart';
 import 'package:users_app/services/local_database_service.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 
 /// Page de notifications/messages admin avec réponses — style messagerie
 class NotificationsPage extends StatefulWidget {
@@ -20,6 +21,7 @@ class _NotificationsPageState extends State<NotificationsPage>
   String? _userId;
   final _replyController = TextEditingController();
   final _scrollController = ScrollController();
+  RealtimeChannel? _realtimeChannel;
 
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -35,10 +37,12 @@ class _NotificationsPageState extends State<NotificationsPage>
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
 
     _loadCachedThenFresh();
+    _subscribeToRealtime();
   }
 
   @override
   void dispose() {
+    _realtimeChannel?.unsubscribe();
     _animController.dispose();
     _replyController.dispose();
     _scrollController.dispose();
@@ -68,7 +72,7 @@ class _NotificationsPageState extends State<NotificationsPage>
           .from('admin_messages')
           .select()
           .or('recipient_type.eq.all,recipient_type.eq.all_users,and(recipient_type.eq.single_user,recipient_id.eq.$_userId)')
-          .or('is_deleted_by_recipient.eq.false,is_deleted_by_recipient.is.null')
+          .not('is_deleted_by_recipient', 'eq', true)
           .order('created_at', ascending: false);
 
       final messages = List<Map<String, dynamic>>.from(data);
@@ -86,6 +90,37 @@ class _NotificationsPageState extends State<NotificationsPage>
       print('❌ Erreur chargement notifications: $e');
       if (mounted) setState(() { _isLoading = false; });
     }
+  }
+
+  /// S'abonner aux nouveaux messages en temps réel
+  void _subscribeToRealtime() {
+    if (_userId == null) return;
+    _realtimeChannel = _supabase
+        .channel('user_notif_$_userId')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'admin_messages',
+      callback: (payload) {
+        if (!mounted) return;
+        final msg = payload.newRecord;
+        final recipientType = msg['recipient_type']?.toString();
+        final recipientId = msg['recipient_id']?.toString();
+        final recipientName = msg['recipient_name']?.toString() ?? '';
+        // Ignorer les messages qu'on a envoyé nous-même (réponses)
+        final isMyReply = recipientName.startsWith('↩');
+        final isForMe = recipientType == 'all_users' ||
+            recipientType == 'all' ||
+            (recipientType == 'single_user' && recipientId == _userId);
+        if (isForMe) {
+          setState(() => _messages.insert(0, msg));
+          // Notification locale pour les messages admin (pas nos réponses)
+          if (!isMyReply) {
+            SnackBarHelper.showInfo(context, msg['title']?.toString() ?? 'Nouveau message de l\'admin');
+          }
+        }
+      },
+    ).subscribe();
   }
 
   Future<void> _onRefresh() async {
@@ -125,17 +160,13 @@ class _NotificationsPageState extends State<NotificationsPage>
         await LocalDatabaseService.clearAdminMessages();
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Historique effacé"), backgroundColor: Colors.green),
-          );
+          SnackBarHelper.showSuccess(context, "Historique effacé avec succès");
           _loadFromSupabase();
         }
       } catch (e) {
         print('❌ Erreur effacement historique: $e');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erreur lors de l'effacement : $e"), backgroundColor: Colors.red),
-          );
+          SnackBarHelper.showError(context, "Erreur lors de l'effacement : $e");
           setState(() => _isLoading = false);
         }
       }
@@ -176,9 +207,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        SnackBarHelper.showError(context, "Erreur d'envoi : $e");
       }
     }
   }
@@ -244,12 +273,7 @@ class _NotificationsPageState extends State<NotificationsPage>
               onPressed: () async {
                 await LocalDatabaseService.markAllMessagesRead();
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("✅ Tous les messages marqués comme lus"),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  SnackBarHelper.showSuccess(context, "Tous les messages marqués comme lus");
                 }
               },
             ),

@@ -8,6 +8,7 @@ import '../constants/app_colors.dart';
 import '../services/admin_log_service.dart';
 import '../services/fcm_notification_service.dart';
 import '../services/email_service.dart';
+import '../methods/common_methods.dart';
 import '../widgets/document_review_card.dart';
 
 class DriverDocumentsPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class DriverDocumentsPage extends StatefulWidget {
 class _DriverDocumentsPageState extends State<DriverDocumentsPage>
     with SingleTickerProviderStateMixin {
   final supabase = Supabase.instance.client;
+  final _commonMethods = CommonMethods();
 
   late TabController _tabController;
 
@@ -88,11 +90,7 @@ class _DriverDocumentsPageState extends State<DriverDocumentsPage>
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erreur chargement: $e'),
-              backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, 'Erreur chargement: $e', isError: true);
       }
     }
   }
@@ -491,21 +489,12 @@ class _DriverDocumentsPageState extends State<DriverDocumentsPage>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ $driverName — compte activé'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _commonMethods.showSnackBar(context, '$driverName — compte activé');
         _loadDriversByDocumentStatus();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erreur: $e'),
-              backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, 'Erreur: $e', isError: true);
       }
     }
   }
@@ -662,20 +651,12 @@ class _DriverDocumentsPageState extends State<DriverDocumentsPage>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('❌ $driverName — dossier rejeté'),
-              backgroundColor: Colors.orange),
-        );
+        _commonMethods.showSnackBar(context, '$driverName — dossier rejeté', isError: true);
         _loadDriversByDocumentStatus();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erreur: $e'),
-              backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, 'Erreur: $e', isError: true);
       }
     }
   }

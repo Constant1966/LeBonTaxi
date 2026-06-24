@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:users_app/services/geocoding_service.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 
 class WorkLocationPageSupabase extends StatefulWidget {
   const WorkLocationPageSupabase({super.key});
@@ -83,9 +84,7 @@ class _WorkLocationPageSupabaseState extends State<WorkLocationPageSupabase> {
 
   Future<void> _saveWorkAddress() async {
     if (_addressController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez entrer une adresse")),
-      );
+      SnackBarHelper.showWarning(context, "Veuillez entrer une adresse");
       return;
     }
 
@@ -119,23 +118,13 @@ class _WorkLocationPageSupabaseState extends State<WorkLocationPageSupabase> {
       _searchFocusNode.unfocus();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Adresse enregistrée avec succès", style: TextStyle(color: Colors.white)),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, "Adresse enregistrée avec succès");
       }
     } catch (e) {
       print("❌ Erreur sauvegarde: $e");
       setState(() => _isSaving = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur lors de la sauvegarde: $e"),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        SnackBarHelper.showError(context, "Erreur lors de la sauvegarde: $e");
       }
     }
   }
@@ -181,12 +170,7 @@ class _WorkLocationPageSupabaseState extends State<WorkLocationPageSupabase> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Adresse supprimée", style: TextStyle(color: Colors.white)),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, "Adresse supprimée");
       }
     } catch (e) {
       print("❌ Erreur suppression adresse: $e");
@@ -203,9 +187,7 @@ class _WorkLocationPageSupabaseState extends State<WorkLocationPageSupabase> {
         'name': 'Lieu de Travail',
       });
     } else if (_savedAddress != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Veuillez d'abord chercher et valider votre adresse depuis la barre pour avoir les coordonnées GPS Exactes.")),
-        );
+        SnackBarHelper.showWarning(context, "Veuillez d'abord chercher et valider votre adresse depuis la barre pour avoir les coordonnées GPS exactes.");
     }
   }
 

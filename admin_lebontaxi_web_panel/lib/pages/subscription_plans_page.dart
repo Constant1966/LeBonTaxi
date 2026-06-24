@@ -1,6 +1,7 @@
 import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../methods/common_methods.dart';
 
 class SubscriptionPlansPage extends StatefulWidget {
   static const String id = "\webPageSubscriptionPlans";
@@ -13,6 +14,7 @@ class SubscriptionPlansPage extends StatefulWidget {
 
 class _SubscriptionPlansPageState extends State<SubscriptionPlansPage> {
   final supabase = Supabase.instance.client;
+  final _commonMethods = CommonMethods();
 
   Future<void> _deletePlan(String id) async {
     final confirmed = await showDialog<bool>(
@@ -39,15 +41,11 @@ class _SubscriptionPlansPageState extends State<SubscriptionPlansPage> {
       try {
         await supabase.from('subscription_plans').delete().eq('id', id);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Plan supprimé"), backgroundColor: Colors.green),
-          );
+          _commonMethods.showSnackBar(context, "Plan supprimé avec succès");
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-          );
+          _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
         }
       }
     }
@@ -144,15 +142,11 @@ class _SubscriptionPlansPageState extends State<SubscriptionPlansPage> {
                       }
                       
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(isEditing ? "Modifié avec succès" : "Ajouté avec succès"), backgroundColor: Colors.green),
-                        );
+                        _commonMethods.showSnackBar(context, isEditing ? "Modifié avec succès" : "Ajouté avec succès");
                       }
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-                        );
+                        _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
                       }
                     }
                   }

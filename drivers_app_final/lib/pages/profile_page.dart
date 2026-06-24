@@ -3,6 +3,7 @@ import 'package:drivers_app/pages/subscription_page.dart';
 import 'package:drivers_app/global/global_var.dart';
 import 'package:drivers_app/services/supabase_service.dart';
 import 'package:drivers_app/services/local_database_service.dart';
+import 'package:drivers_app/widgets/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:drivers_app/authentication/login_screen.dart';
 import 'package:drivers_app/theme/app_colors.dart';
@@ -570,16 +571,12 @@ class _ProfilePageState extends State<ProfilePage>
                   }
                   if (mounted) {
                     setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("✅ Profil mis à jour"), backgroundColor: Colors.green),
-                    );
+                    SnackBarHelper.showSuccess(context, "Profil mis à jour avec succès");
                   }
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("❌ Erreur: $e"), backgroundColor: Colors.red),
-                  );
+                  SnackBarHelper.showError(context, "Erreur: $e");
                 }
               }
             },

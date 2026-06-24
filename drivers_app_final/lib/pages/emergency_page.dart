@@ -4,6 +4,7 @@ import 'package:drivers_app/services/osm_map_service.dart';
 import 'package:drivers_app/services/osrm_routing_service.dart';
 import 'package:drivers_app/services/supabase_service.dart';
 import 'package:drivers_app/theme/app_colors.dart';
+import 'package:drivers_app/widgets/snackbar_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -180,9 +181,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
 
   Future<void> _callClient() async {
     if (_userPhone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Numéro non disponible")),
-      );
+      SnackBarHelper.showWarning(context, "Numéro non disponible");
       return;
     }
 
@@ -196,20 +195,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
     setState(() => _status = "arrived");
 
     // On ne change pas le status dans la DB ici, juste l'UI locale
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 12),
-            Text("Vous êtes arrivé !"),
-          ],
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    SnackBarHelper.showSuccess(context, "Vous êtes arrivé !");
   }
 
   Future<void> _resolveEmergency() async {

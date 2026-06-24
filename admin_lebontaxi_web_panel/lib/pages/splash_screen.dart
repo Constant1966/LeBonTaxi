@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../dashboard/side_navigation_drawer.dart';
+import '../methods/common_methods.dart';
 import 'login_page.dart';
 import 'dart:async';
 
@@ -119,9 +120,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       // L'utilisateur n'est pas un admin
       await Supabase.instance.client.auth.signOut();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Accès refusé. Vous n'êtes pas administrateur."), backgroundColor: Colors.red),
-        );
+        CommonMethods().showSnackBar(context, "Accès refusé. Vous n'êtes pas administrateur.", isError: true);
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );

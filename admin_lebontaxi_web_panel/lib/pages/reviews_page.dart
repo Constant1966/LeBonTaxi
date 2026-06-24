@@ -2,6 +2,7 @@ import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/admin_log_service.dart';
+import '../methods/common_methods.dart';
 
 class ReviewsPage extends StatefulWidget {
   static const String id = "\\webPageReviews";
@@ -13,6 +14,7 @@ class ReviewsPage extends StatefulWidget {
 
 class _ReviewsPageState extends State<ReviewsPage> {
   final supabase = Supabase.instance.client;
+  final _commonMethods = CommonMethods();
   int? _ratingFilter;
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoading = true;
@@ -89,9 +91,9 @@ class _ReviewsPageState extends State<ReviewsPage> {
                 }).eq('id', review['id']);
                 await AdminLogService.log(action: 'Réponse commentaire', targetType: 'review', targetId: review['id']?.toString(), details: {'type': replyType});
                 _loadReviews();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Réponse envoyée"), backgroundColor: Colors.green));
+                if (mounted) _commonMethods.showSnackBar(context, "Réponse envoyée avec succès");
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red));
+                if (mounted) _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), foregroundColor: Colors.white),

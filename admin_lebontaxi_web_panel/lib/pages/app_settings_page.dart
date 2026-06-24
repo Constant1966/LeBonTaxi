@@ -2,6 +2,7 @@ import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/admin_log_service.dart';
+import '../methods/common_methods.dart';
 
 class AppSettingsPage extends StatefulWidget {
   static const String id = "\\webPageAppSettings";
@@ -16,6 +17,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   
   final supabase = Supabase.instance.client;
+  final _commonMethods = CommonMethods();
   bool isLoading = true;
   bool isSaving = false;
 
@@ -70,9 +72,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur de chargement: $e"), backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, "Erreur de chargement: $e", isError: true);
       }
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -175,26 +175,17 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
         await supabase.from('app_settings').update(fallbackUpdates).eq('id', 1);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("⚠️ Tarifs enregistrés, mais les contacts de support nécessitent d'exécuter la migration SQL dans Supabase."),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          _commonMethods.showSnackBar(context, "Tarifs enregistrés, mais les contacts de support nécessitent d'exécuter la migration SQL dans Supabase.", isError: true);
         }
       }
       await AdminLogService.log(action: 'Modification tarification', targetType: 'settings', targetId: '1', details: updates);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Paramètres enregistrés — les apps se mettront à jour automatiquement"), backgroundColor: Colors.green),
-        );
+        _commonMethods.showSnackBar(context, "Paramètres enregistrés — les apps se mettront à jour automatiquement");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
       }
     } finally {
       if (mounted) setState(() => isSaving = false);

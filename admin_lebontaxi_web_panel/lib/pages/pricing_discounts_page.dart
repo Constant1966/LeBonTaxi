@@ -2,6 +2,7 @@ import '../constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/admin_log_service.dart';
+import '../methods/common_methods.dart';
 
 class PricingDiscountsPage extends StatefulWidget {
   static const String id = "\\webPagePricingDiscounts";
@@ -13,6 +14,7 @@ class PricingDiscountsPage extends StatefulWidget {
 
 class _PricingDiscountsPageState extends State<PricingDiscountsPage> with SingleTickerProviderStateMixin {
   final supabase = Supabase.instance.client;
+  final _commonMethods = CommonMethods();
   late TabController _tabController;
 
   // Pricing controllers
@@ -129,9 +131,9 @@ class _PricingDiscountsPageState extends State<PricingDiscountsPage> with Single
         });
       } catch (_) {} // Ne pas bloquer si la notif échoue
 
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tarifs enregistrés et chauffeurs notifiés"), backgroundColor: Colors.green));
+      if (mounted) _commonMethods.showSnackBar(context, "Tarifs enregistrés et chauffeurs notifiés");
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red));
+      if (mounted) _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
     } finally {
       if (mounted) setState(() => _isSavingPricing = false);
     }
@@ -248,9 +250,9 @@ class _PricingDiscountsPageState extends State<PricingDiscountsPage> with Single
                     await supabase.from('discounts').insert(data);
                   }
                   await AdminLogService.log(action: isEdit ? 'Modification rabais' : 'Création rabais', targetType: 'discount', details: data);
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? "Rabais modifié" : "Rabais créé"), backgroundColor: Colors.green));
+                  if (mounted) _commonMethods.showSnackBar(context, isEdit ? "Rabais modifié" : "Rabais créé");
                 } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red));
+                  if (mounted) _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
                 }
               },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), foregroundColor: Colors.white),
@@ -583,15 +585,11 @@ class _PricingDiscountsPageState extends State<PricingDiscountsPage> with Single
 
       await AdminLogService.log(action: 'Modification parrainage', targetType: 'settings', targetId: '1', details: updates);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Configuration du parrainage enregistrée avec succès !"), backgroundColor: Colors.green),
-        );
+        _commonMethods.showSnackBar(context, "Configuration du parrainage enregistrée avec succès !");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSavingReferral = false);

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/admin_log_service.dart';
+import '../services/fcm_notification_service.dart';
+import '../methods/common_methods.dart';
 
 class CommunicationPage extends StatefulWidget {
   static const String id = "\\webPageCommunication";
@@ -25,6 +27,10 @@ class CommunicationPage extends StatefulWidget {
 
 class _CommunicationPageState extends State<CommunicationPage> {
   final supabase = Supabase.instance.client;
+  final _commonMethods = CommonMethods();
+  
+  // Realtime channel
+  RealtimeChannel? _realtimeChannel;
   
   // Controllers
   final _titleController = TextEditingController();
@@ -57,16 +63,37 @@ class _CommunicationPageState extends State<CommunicationPage> {
     super.initState();
     _highlightedMessageId = widget.initialMessageId;
     _initData();
+    _subscribeToRealtime();
   }
 
-  @override
   void dispose() {
+    _realtimeChannel?.unsubscribe();
     _titleController.dispose();
     _messageController.dispose();
     _searchController.dispose();
     _historyScrollController.dispose();
     _chatInputController.dispose();
     super.dispose();
+  }
+
+  /// S'abonner aux réponses des chauffeurs/clients en temps réel
+  void _subscribeToRealtime() {
+    _realtimeChannel = supabase
+        .channel('admin_comm_realtime')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'admin_messages',
+      callback: (payload) {
+        if (!mounted) return;
+        final msg = payload.newRecord;
+        final recipientName = msg['recipient_name']?.toString() ?? '';
+        // Seulement les réponses (préfixées par ↩)
+        if (recipientName.startsWith('↩')) {
+          _loadConversations();
+        }
+      },
+    ).subscribe();
   }
 
   Future<void> _initData() async {
@@ -442,13 +469,22 @@ class _CommunicationPageState extends State<CommunicationPage> {
         details: {'message': trimmed, 'recipient': recipientName},
       );
 
+      // Envoyer une notification push FCM
+      if (type == 'single_driver') {
+        await FcmNotificationService.sendToDriver(
+          driverId: recipientId,
+          type: 'admin_message',
+          title: 'Message de l\'admin',
+          body: trimmed.length > 100 ? '${trimmed.substring(0, 100)}...' : trimmed,
+          sendEmail: false,
+        );
+      }
+
       await _loadConversations();
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur d'envoi: $e"), backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, "Erreur d'envoi: $e", isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -457,9 +493,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
 
   Future<void> _sendMessage() async {
     if (_titleController.text.isEmpty || _messageController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez remplir le titre et le message"), backgroundColor: Colors.red),
-      );
+      _commonMethods.showSnackBar(context, "Veuillez remplir le titre et le message", isError: true);
       return;
     }
 
@@ -489,21 +523,28 @@ class _CommunicationPageState extends State<CommunicationPage> {
         details: {'title': _titleController.text, 'recipientType': _recipientType},
       );
 
+      // Envoyer push FCM aux chauffeurs si concernés
+      if (_recipientType == 'all_drivers' || _recipientType == 'all') {
+        await FcmNotificationService.sendToAllDrivers(
+          type: 'admin_broadcast',
+          title: _titleController.text.trim(),
+          body: _messageController.text.trim().length > 100
+              ? '${_messageController.text.trim().substring(0, 100)}...'
+              : _messageController.text.trim(),
+        );
+      }
+
       _titleController.clear();
       _messageController.clear();
       setState(() => _isWritingAnnouncement = false);
       
       await _loadConversations();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Diffusion lancée avec succès"), backgroundColor: Colors.green),
-        );
+        _commonMethods.showSnackBar(context, "Diffusion lancée avec succès !");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        _commonMethods.showSnackBar(context, "Erreur: $e", isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -996,14 +1037,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
                     tooltip: "Copier le numéro de téléphone",
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: phone));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Téléphone copié : $phone"),
-                          backgroundColor: AppColors.success,
-                          behavior: SnackBarBehavior.floating,
-                          width: 280,
-                        ),
-                      );
+                      _commonMethods.showSnackBar(context, "Téléphone copié : $phone");
                     },
                   ),
                 IconButton(

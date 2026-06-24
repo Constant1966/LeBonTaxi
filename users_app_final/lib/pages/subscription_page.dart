@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:users_app/theme/app_colors.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/models/subscription_plan_model.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 import '../global/global_var_supabase.dart';
 
 class SubscriptionPage extends StatefulWidget {
@@ -69,23 +70,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         Navigator.pop(context); // Fermer le loader
         
         // 5. Succès
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-             content: Text("Abonnement ${plan.name} activé avec succès !"),
-             backgroundColor: AppColors.success,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, "Abonnement ${plan.name} activé avec succès !");
         
         setState(() {}); // Rafraichir l'UI
       } catch(e) {
         if (!mounted) return;
         Navigator.pop(context); // Fermer le loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-             content: Text("Erreur: ${e.toString()}"),
-             backgroundColor: AppColors.error,
-          ),
-        );
+        SnackBarHelper.showError(context, "Erreur: ${e.toString()}");
       }
     }
   }

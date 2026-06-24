@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -72,30 +73,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text("Profil mis à jour avec succès !"),
-              ],
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, "Profil mis à jour avec succès !");
         Navigator.pop(context, true); // Renvoyer true pour indiquer qu'il faut rafraîchir le profil
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur: $e"),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        SnackBarHelper.showError(context, "Erreur: $e");
       }
     }
   }

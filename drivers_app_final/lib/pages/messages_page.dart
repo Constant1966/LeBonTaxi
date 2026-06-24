@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_colors.dart';
+import '../widgets/snackbar_helper.dart';
 
 class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
@@ -53,7 +54,7 @@ class _MessagesPageState extends State<MessagesPage>
     try {
       final data = await _supabase.from('admin_messages').select()
           .or('recipient_type.eq.all_drivers,recipient_type.eq.all,and(recipient_type.eq.single_driver,recipient_id.eq.$_myId)')
-          .or('is_deleted_by_recipient.eq.false,is_deleted_by_recipient.is.null')
+          .not('is_deleted_by_recipient', 'eq', true)
           .order('created_at', ascending: false)
           .limit(50);
       if (mounted) {
@@ -230,9 +231,7 @@ class _MessagesPageState extends State<MessagesPage>
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        SnackBarHelper.showError(context, "Erreur: $e");
       }
     }
   }
@@ -648,9 +647,7 @@ class _AdminChatScreenState extends State<_AdminChatScreen> {
       widget.onReply();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        SnackBarHelper.showError(context, "Erreur d'envoi : $e");
       }
     }
   }
@@ -690,17 +687,13 @@ class _AdminChatScreenState extends State<_AdminChatScreen> {
             .eq('recipient_type', 'single_driver');
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Discussion effacée"), backgroundColor: Colors.green),
-          );
+          SnackBarHelper.showSuccess(context, "Discussion effacée avec succès");
           Navigator.pop(context);
           widget.onReply();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-          );
+          SnackBarHelper.showError(context, "Erreur: $e");
         }
       }
     }
@@ -1009,9 +1002,7 @@ class _DriverChatScreenState extends State<_DriverChatScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
-        );
+        SnackBarHelper.showError(context, "Erreur d'envoi : $e");
       }
     }
   }

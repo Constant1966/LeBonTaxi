@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:users_app/appInfo/app_info.dart';
 import 'package:users_app/global/global_var_supabase.dart';
 import 'package:users_app/models/address_model.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 
 class CommonMethods {
 
@@ -38,7 +39,7 @@ class CommonMethods {
     return true;
   }
 
-  /// Affiche un SnackBar
+  /// Affiche un SnackBar élégant — délègue au SnackBarHelper
   void displaySnackBar(
       String messageText,
       BuildContext context, {
@@ -47,27 +48,11 @@ class CommonMethods {
       }) {
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isError ? Icons.error_outline : Icons.info_outline,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(messageText)),
-          ],
-        ),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        duration: duration,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
+    if (isError) {
+      SnackBarHelper.showError(context, messageText);
+    } else {
+      SnackBarHelper.showSuccess(context, messageText);
+    }
   }
 
   /// Envoie une requête HTTP GET

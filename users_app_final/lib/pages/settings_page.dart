@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:users_app/services/supabase_service.dart';
 import 'package:users_app/theme/app_colors.dart';
+import 'package:users_app/widgets/snackbar_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:users_app/services/local_database_service.dart';
 import 'package:users_app/appInfo/app_info.dart';
@@ -43,12 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await prefs.setBool('darkMode', _darkModeEnabled);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Paramètres enregistrés"),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      SnackBarHelper.showSuccess(context, "Paramètres enregistrés");
     }
   }
 
@@ -103,12 +99,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () async {
               await LocalDatabaseService.saveAppSetting('has_completed_guide', 'false');
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("🧭 Guide d'accueil réinitialisé. Retournez à l'accueil pour le recommencer."),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
+                SnackBarHelper.showSuccess(context, "🧭 Guide d'accueil réinitialisé. Retournez à l'accueil pour le recommencer.");
               }
             },
             isDark: isDark,
@@ -268,12 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Compte supprimé avec succès"),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, "Compte supprimé avec succès");
 
         // ✅ Rediriger vers login
         Navigator.pushAndRemoveUntil(
@@ -286,12 +272,7 @@ class _SettingsPageState extends State<SettingsPage> {
       print("❌ Erreur suppression compte: $e");
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur: ${e.toString()}"),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        SnackBarHelper.showError(context, "Erreur: ${e.toString()}");
       }
     }
   }
